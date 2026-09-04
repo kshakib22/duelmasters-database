@@ -162,22 +162,26 @@
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    padding-right: 28px;
+    /* Room for the chevron. text-overflow keeps a long value (a set name, an
+       ability) from ever sliding under the arrow. */
+    padding-right: 30px;
+    text-overflow: ellipsis;
     appearance: none;
     -webkit-appearance: none;
+    background-color: var(--bg-elev);
     background-repeat: no-repeat;
-    background-position: right 9px center;
-    background-size: 11px;
+    background-position: right 10px center;
+    background-size: 11px 11px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a2a8ba' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   }
-  select.active {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f9dff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
-  }
   select option { background: var(--bg-elev-2); color: var(--text); }
+  /* One rule for the active state — split rules let background-color reset the
+     chevron layer and the arrow landed on top of the label. */
   select.active {
     border-color: var(--accent);
     color: var(--accent);
     background-color: var(--accent-dim);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f9dff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   }
 
   .railBottom {
@@ -189,65 +193,105 @@
 
   /* Civilization chips — the only saturated hues on the surface. */
   .civChips { display: flex; gap: 5px; }
+  /* Civilization chips carry their colour across the whole button, with dark ink
+     on top — the colour IS the label, so it must not be a dot beside grey text. */
   .civChip {
+    --civ: var(--border-strong);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
+    justify-content: center;
+    background: color-mix(in srgb, var(--civ) 22%, var(--bg-elev));
+    border: 1px solid color-mix(in srgb, var(--civ) 45%, transparent);
+    color: color-mix(in srgb, var(--civ) 78%, #ffffff);
     font-family: var(--display);
     font-size: 12px;
-    font-weight: 600;
-    padding: 7px 11px 7px 9px;
-    border-radius: 7px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 8px 14px;
+    border-radius: 8px;
     cursor: pointer;
     transition: color var(--t-instant) var(--ease-out),
                 border-color var(--t-instant) var(--ease-out),
                 background-color var(--t-instant) var(--ease-out),
+                box-shadow var(--t-instant) var(--ease-out),
                 transform var(--t-instant) var(--ease-out);
   }
-  .civChip:hover { color: var(--text); border-color: var(--border-strong); }
-  .civChip:active { transform: scale(0.96); }
-  .civChip .civ-dot { margin: 0; transition: transform var(--t-instant) var(--ease-out); }
-  .civChip[aria-pressed="true"] {
-    color: var(--text);
-    border-color: currentColor;
+  .civChip:hover {
+    background: color-mix(in srgb, var(--civ) 38%, var(--bg-elev));
+    border-color: color-mix(in srgb, var(--civ) 70%, transparent);
+    color: #fff;
   }
-  .civChip[aria-pressed="true"] .civ-dot { transform: scale(1.35); }
+  .civChip:active { transform: scale(0.96); }
+  /* Selected: the civilisation colour fills the control and the text flips to ink. */
+  .civChip[aria-pressed="true"] {
+    background: var(--civ);
+    border-color: var(--civ);
+    color: #0b0d12;
+  }
+  .civChip[aria-pressed="true"]:hover {
+    background: color-mix(in srgb, var(--civ) 85%, #fff);
+    border-color: color-mix(in srgb, var(--civ) 85%, #fff);
+    color: #0b0d12;
+  }
+  .civChip.civ-Light     { --civ: var(--light); }
+  .civChip.civ-Water     { --civ: var(--water); }
+  .civChip.civ-Darkness  { --civ: var(--darkness); }
+  .civChip.civ-Fire      { --civ: var(--fire); }
+  .civChip.civ-Nature    { --civ: var(--nature); }
   @keyframes civTick {
     0%   { transform: scale(1); }
-    45%  { transform: scale(1.7); }
-    100% { transform: scale(1.35); }
+    45%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
   }
-  .civChip.justPressed .civ-dot { animation: civTick 160ms var(--ease-out); }
+  .civChip.justPressed { animation: civTick 160ms var(--ease-out); }
 
+  /* Buttons are filled surfaces, not dim outlines — the whole control carries the
+     colour and the label sits at full contrast on it. */
   .btn {
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
+    background: var(--bg-elev-3);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
     font-family: var(--display);
     font-size: 12px;
-    font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 7px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    padding: 9px 14px;
+    border-radius: 8px;
     cursor: pointer;
     transition: color var(--t-instant) var(--ease-out),
                 border-color var(--t-instant) var(--ease-out),
                 background-color var(--t-instant) var(--ease-out),
+                box-shadow var(--t-instant) var(--ease-out),
                 transform var(--t-instant) var(--ease-out);
   }
-  .btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .btn:hover {
+    background: #333a4d;
+    border-color: #48506a;
+    color: #fff;
+  }
   .btn:active { transform: scale(0.96); }
   .btn.primary {
     background: var(--accent);
     border-color: var(--accent);
     color: #0b0d12;
-    font-weight: 700;
   }
-  .btn.primary:hover { background: #a3aeff; border-color: #a3aeff; color: #0b0d12; }
+  .btn.primary:hover {
+    background: #a8b2ff;
+    border-color: #a8b2ff;
+    color: #0b0d12;
+  }
+  /* Destructive: reads as a warning on the surface itself, not just on hover. */
+  .btn.ghost {
+    background: color-mix(in srgb, var(--fire) 16%, var(--bg-elev));
+    border-color: color-mix(in srgb, var(--fire) 40%, transparent);
+    color: color-mix(in srgb, var(--fire) 72%, #ffffff);
+  }
+  .btn.ghost:hover {
+    background: var(--fire);
+    border-color: var(--fire);
+    color: #0b0d12;
+  }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn.ghost { background: transparent; }
 
   #clearBtn {
     margin-left: auto;
@@ -333,32 +377,46 @@
     transition-duration: 80ms;
   }
   .card.inDeck { border-color: var(--accent); }
-  .card.inDeck .qty {
+
+  /* Deck stepper — a real −/count/+ control on the card itself. A card already in
+     the deck must be removable where it was added, not only from the drawer. */
+  .card .stepper {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    font-family: var(--display);
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--accent);
-    color: #0b0d12;
-    border-radius: 5px;
-    padding: 2px 6px;
-    z-index: 3;
-    animation: qtyPop 140ms var(--ease-out);
-  }
-  /* Add-to-deck: the primary discoverability fix — a real, always-visible-on-touch
-     control on every card, not something only found by opening the modal. */
-  .card .addBtn {
-    position: absolute;
-    top: 6px;
+    /* Sits over the foot of the scan, not the head — the card's printed name and
+       cost live at the top and must stay readable. */
     left: 6px;
+    right: 6px;
+    bottom: calc(var(--metaH, 74px) + 6px);
     z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity var(--t-fast) var(--ease-out),
+                transform var(--t-fast) var(--ease-out);
+  }
+  .card:hover .stepper,
+  .card:focus-within .stepper,
+  .card.inDeck .stepper {
+    opacity: 1;
+    transform: none;
+  }
+  /* Touch devices have no hover — the controls must be visible from the start
+     there. The width query is a belt-and-braces fallback for hybrid devices that
+     report hover support but are driven by a finger. */
+  .no-hover .card .stepper { opacity: 1; transform: none; }
+  @media (max-width: 720px) {
+    .card .stepper { opacity: 1; transform: none; }
+  }
+
+  .card .stepBtn {
     width: 26px;
     height: 26px;
+    flex: none;
     border-radius: 7px;
     border: 1px solid var(--border-strong);
-    background: rgba(11,13,18,0.72);
+    background: rgba(11,13,18,0.78);
     color: var(--text);
     font-family: var(--display);
     font-size: 16px;
@@ -369,27 +427,38 @@
     justify-content: center;
     cursor: pointer;
     backdrop-filter: blur(3px);
-    opacity: 0;
-    transform: scale(0.85);
-    transition: opacity var(--t-fast) var(--ease-out),
-                transform var(--t-fast) var(--ease-out),
-                background-color var(--t-instant) var(--ease-out),
-                border-color var(--t-instant) var(--ease-out);
+    transition: background-color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out),
+                color var(--t-instant) var(--ease-out),
+                transform var(--t-instant) var(--ease-out);
   }
-  .card:hover .addBtn,
-  .card:focus-visible .addBtn,
-  .card.inDeck .addBtn {
-    opacity: 1;
-    transform: scale(1);
-  }
-  .card .addBtn:hover {
+  .card .stepBtn:hover {
     background: var(--accent);
     border-color: var(--accent);
     color: #0b0d12;
   }
-  .card .addBtn:active { transform: scale(0.9); }
-  /* Touch devices have no hover — the button must be visible from the start there. */
-  .no-hover .card .addBtn { opacity: 1; transform: scale(1); }
+  .card .stepBtn.minus:hover {
+    background: #ff6b52;
+    border-color: #ff6b52;
+    color: #0b0d12;
+  }
+  .card .stepBtn:active { transform: scale(0.9); }
+  /* The minus only exists once there is something to remove. */
+  .card .stepBtn.minus { display: none; }
+  .card.inDeck .stepBtn.minus { display: flex; }
+
+  .card .qty {
+    margin-left: auto;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #0b0d12;
+    border-radius: 5px;
+    padding: 3px 7px;
+    line-height: 1;
+    animation: qtyPop 140ms var(--ease-out);
+  }
   @keyframes qtyPop {
     from { transform: scale(0.6); opacity: 0; }
     to   { transform: scale(1); opacity: 1; }
@@ -406,7 +475,13 @@
   .card img {
     width: 100%;
     height: 100%;
+    /* The scans carry their own white printed border with square corners, which
+       showed as pale wedges at the tile's rounded bottom. shobu.io rounds the
+       scan itself (borderRadius 5%); we round it and scale very slightly past the
+       frame so the white edge is cropped rather than merely tucked behind. */
     object-fit: cover;
+    transform: scale(1.035);
+    border-radius: 5% / 3.6%;
     display: block;
     opacity: 0;
     transition: opacity var(--t-base) var(--ease-out);
@@ -459,16 +534,6 @@
   .civ-dot.civ-Nature { background: var(--nature); }
   .civ-dot.civ-Light { background: var(--light); }
   .civ-dot.civ-Darkness { background: var(--darkness); }
-  .civChip[aria-pressed="true"].civ-Fire { color: var(--fire); }
-  .civChip[aria-pressed="true"].civ-Water { color: var(--water); }
-  .civChip[aria-pressed="true"].civ-Nature { color: var(--nature); }
-  .civChip[aria-pressed="true"].civ-Light { color: var(--light); }
-  .civChip[aria-pressed="true"].civ-Darkness { color: var(--darkness); }
-  .civChip[aria-pressed="true"].civ-Fire { background: rgba(255,107,82,0.14); }
-  .civChip[aria-pressed="true"].civ-Water { background: rgba(69,169,245,0.14); }
-  .civChip[aria-pressed="true"].civ-Nature { background: rgba(79,217,127,0.14); }
-  .civChip[aria-pressed="true"].civ-Light { background: rgba(247,214,74,0.14); }
-  .civChip[aria-pressed="true"].civ-Darkness { background: rgba(187,116,221,0.14); }
 
   /* ---------- Modal ---------- */
   #overlay {
@@ -628,6 +693,36 @@
     padding: 14px 16px 12px;
     flex: none;
   }
+  #deckViewBtn { width: 100%; margin: 9px 0 2px; }
+  #deckViewBtn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0b0d12;
+  }
+
+  /* Deck-view banner — the grid is showing the deck, not the database. That is a
+     big enough change of meaning that it has to be stated, with a way back. */
+  #deckViewBar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+    padding: 11px 14px;
+    border: 1px solid var(--accent);
+    background: var(--accent-dim);
+    border-radius: var(--radius);
+  }
+  body.deckViewOn #deckViewBar { display: flex; }
+  #deckViewBar .dvTitle {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+  #deckViewBar .dvMeta { color: var(--text-dim); font-size: 12.5px; }
+  #deckViewBar .btn { margin-left: auto; }
+
   .deckTitleRow { display: flex; align-items: center; gap: 8px; }
   #deckName {
     flex: 1 1 auto;
@@ -891,9 +986,9 @@
     .searchWrap { flex-basis: 100%; }
     .railBottom { gap: 6px; }
     .civChips { width: 100%; }
-    .civChip { flex: 1; justify-content: center; padding: 8px 4px; }
-    .civChip .civLabel { display: none; }
-    .civChip .civ-dot { width: 10px; height: 10px; }
+    /* The chip's fill is its colour and its label is its name — hiding the label
+       here would leave five unlabelled swatches. Shrink the type instead. */
+    .civChip { flex: 1; justify-content: center; padding: 8px 2px; font-size: 10.5px; }
     #clearBtn { margin-left: 0; }
     main { padding: 14px 12px 0; }
     #grid { gap: 10px; }
@@ -957,6 +1052,11 @@
 
 <main>
   <div id="loading">Loading card data…</div>
+  <div id="deckViewBar">
+    <span class="dvTitle" id="dvTitle">Your deck</span>
+    <span class="dvMeta" id="dvMeta"></span>
+    <button class="btn" id="dvExit">Back to all cards</button>
+  </div>
   <div id="gridScroll"><div id="grid"></div></div>
   <div id="emptyState">
     <div class="big">No cards match these filters.</div>
@@ -983,6 +1083,7 @@
         <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
+    <button class="btn" id="deckViewBtn" aria-pressed="false">View deck as cards</button>
     <div class="civBar" id="civBar" aria-hidden="true"></div>
     <div class="notices" id="deckNotices"></div>
     <div class="curve" id="curve" aria-hidden="true"></div>
@@ -1026,6 +1127,7 @@ let FACETS = {};
 let RESULTS = [];
 let DECK = new Map();      // card id -> qty
 let deckOrder = [];        // preserves insertion order
+let deckView = false;      // grid shows only the deck, one tile per copy
 let modalCard = null;
 
 const CIVS = ["Light", "Water", "Darkness", "Fire", "Nature"];
@@ -1140,6 +1242,22 @@ function currentFilters() {
 
 function computeResults() {
   const f = currentFilters();
+
+  // "My deck" view: show only the cards in the deck, one tile per copy, in deck
+  // order. This is the answer to "where do I see the deck I built" — the drawer
+  // is a summary, this is the deck itself, as cards.
+  if (deckView) {
+    const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
+    const out = [];
+    deckOrder.forEach(id => {
+      const c = byId.get(id);
+      if (!c) return;
+      const q = DECK.get(id) || 0;
+      for (let i = 0; i < q; i++) out.push(c);
+    });
+    return out;
+  }
+
   let out = ALL_CARDS.filter(c => {
     if (f.civs.length) {
       const cv = civsOf(c);
@@ -1214,6 +1332,8 @@ const VGrid = {
     if (!this.metaH || Math.abs(colW - (this._lastColW || 0)) > 2) {
       this.metaH = this.measureMetaH(colW);
       this._lastColW = colW;
+      // the stepper anchors to the top of the text block, so it needs this too
+      grid.style.setProperty("--metaH", this.metaH + "px");
     }
     // image is 5:7, meta block height is measured from real markup (see measureMetaH)
     this.cardH = Math.round(colW * 7 / 5) + this.metaH + 1; // +1: fractional-pixel safety margin
@@ -1315,8 +1435,13 @@ function buildCardEl(c, index) {
   if (qty) el.classList.add("inDeck");
   const src = imgSrc(c);
   el.innerHTML = `
-    ${qty ? `<span class="qty">${qty}</span>` : ""}
-    <span class="addBtn" role="button" tabindex="-1" aria-label="${qty ? "Add another copy to deck" : "Add to deck"}">+</span>
+    <span class="stepper">
+      <span class="stepBtn plus" role="button" tabindex="-1"
+            aria-label="${qty ? "Add another copy to deck" : "Add to deck"}">+</span>
+      <span class="stepBtn minus" role="button" tabindex="-1"
+            aria-label="Remove one copy from deck">−</span>
+      ${qty ? `<span class="qty">${qty}</span>` : ""}
+    </span>
     <span class="imgwrap">
       ${src
         ? `<img loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="">`
@@ -1334,10 +1459,18 @@ function buildCardEl(c, index) {
       img.parentElement.innerHTML = '<span class="noimg">Image unavailable</span>';
     }, { once: true });
   }
-  el.querySelector(".addBtn").addEventListener("click", (e) => {
+  el.querySelector(".stepBtn.plus").addEventListener("click", (e) => {
     e.stopPropagation();
     addToDeck(c, 1);
-    toast(`Added ${c.name || "card"} to deck`);
+    toast(`Added ${c.name || "card"} — ${DECK.get(c.id)} in deck`);
+  });
+  el.querySelector(".stepBtn.minus").addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!DECK.get(c.id)) return;
+    addToDeck(c, -1);
+    const left = DECK.get(c.id) || 0;
+    toast(left ? `Removed one ${c.name || "card"} — ${left} left`
+               : `Removed ${c.name || "card"} from deck`);
   });
   el.addEventListener("click", () => openModal(c));
   return el;
@@ -1350,9 +1483,11 @@ function render(opts) {
   RESULTS = computeResults();
 
   const n = RESULTS.length;
-  resultCount.textContent = n === ALL_CARDS.length
-    ? `${n.toLocaleString()} cards`
-    : `${n.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()}`;
+  resultCount.textContent = deckView
+    ? `${n.toLocaleString()} in deck`
+    : n === ALL_CARDS.length
+      ? `${n.toLocaleString()} cards`
+      : `${n.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()}`;
   resultCount.classList.add("flash");
   setTimeout(() => resultCount.classList.remove("flash"), 220);
 
@@ -1459,7 +1594,10 @@ function addToDeck(c, n) {
   }
   saveDeck();
   renderDeck();
-  VGrid.refreshCard(c.id);
+  // Deck view has one tile per copy, so a quantity change adds/removes tiles —
+  // patching the single card in place is not enough, the grid must rebuild.
+  if (deckView) render({ keepScroll: true });
+  else VGrid.refreshCard(c.id);
   if (modalCard && modalCard.id === c.id) updateModalStepper();
   return next;
 }
@@ -1495,6 +1633,13 @@ function renderDeck() {
   $("deckCount").textContent = total;
   $("deckCount").classList.toggle("legal", total >= 40);
   $("spineCount").textContent = total;
+
+  // In deck view the grid IS the deck, so it has to track edits — and an emptied
+  // deck must leave the mode rather than strand the visitor on a blank grid.
+  if (deckView) {
+    if (!DECK.size) { setDeckView(false); return; }
+    syncDeckViewBar();
+  }
 
   const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
   const entries = deckOrder.filter(id => DECK.get(id)).map(id => [byId.get(id), DECK.get(id)])
@@ -1696,6 +1841,30 @@ function setDeckOpen(open) {
   requestAnimationFrame(() => setTimeout(() => VGrid.layout(), 160));
 }
 
+/* ---------- Deck view (grid shows only the deck) ---------- */
+
+function setDeckView(on) {
+  // Nothing to show is a dead end, so refuse rather than present an empty grid.
+  if (on && !DECK.size) { toast("Your deck is empty — add a card first"); return; }
+  deckView = on;
+  document.body.classList.toggle("deckViewOn", on);
+  const btn = $("deckViewBtn");
+  btn.setAttribute("aria-pressed", String(on));
+  btn.textContent = on ? "Back to all cards" : "View deck as cards";
+  syncDeckViewBar();
+  render();
+}
+
+function syncDeckViewBar() {
+  if (!deckView) return;
+  const name = $("deckName").value.trim() || "Untitled deck";
+  const total = deckTotal();
+  const unique = DECK.size;
+  $("dvTitle").textContent = name;
+  $("dvMeta").textContent =
+    `${total} card${total === 1 ? "" : "s"} · ${unique} unique — every copy shown`;
+}
+
 /* ---------- Keyboard ---------- */
 
 function focusedCardIndex() {
@@ -1780,7 +1949,9 @@ overlay.addEventListener("click", e => { if (e.target === overlay) closeModal();
 
 $("deckSpine").addEventListener("click", () => setDeckOpen(true));
 $("deckCloseBtn").addEventListener("click", () => setDeckOpen(false));
-$("deckName").addEventListener("input", debounce(saveDeck, 250));
+$("deckName").addEventListener("input", debounce(() => { saveDeck(); syncDeckViewBar(); }, 250));
+$("deckViewBtn").addEventListener("click", () => setDeckView(!deckView));
+$("dvExit").addEventListener("click", () => setDeckView(false));
 
 $("deckList").addEventListener("click", (e) => {
   const row = e.target.closest(".deckRow");
@@ -1856,7 +2027,7 @@ function syncCivChips() {
 function buildCivChips() {
   civChips.innerHTML = CIVS.map(cv =>
     `<button class="civChip civ-${cv}" data-civ="${cv}" aria-pressed="false">
-       <span class="civ-dot civ-${cv}"></span><span class="civLabel">${cv}</span>
+       <span class="civLabel">${cv}</span>
      </button>`).join("");
   civChips.addEventListener("click", (e) => {
     const btn = e.target.closest(".civChip");

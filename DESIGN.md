@@ -82,15 +82,25 @@ feedback.
 - **Card** — a `<button>` (not a div), 5:7 scan, two-line clamped name, a centered civ-dot
   + set footer (no mana number here — it's already printed on the card art itself).
   Images fade in on load; a failed image degrades to a labeled tile, never a broken icon.
-  Deck membership shows as an accent border plus a quantity badge (top-right). A "+"
-  add-to-deck control (top-left) is visible on hover/focus on desktop and always visible
-  on touch devices (`hover: none`) — the primary way to discover deck building exists.
+  Deck membership shows as an accent border plus a quantity badge. A **stepper** (`−`
+  `+` and the count) sits over the foot of the scan — never the head, where the printed
+  name and cost live — visible on hover/focus on desktop and always visible on touch
+  (`hover: none`, plus a ≤720px fallback for hybrids). The `−` only renders once the
+  card is actually in the deck. Adding must be undoable where it was done: a `+` with no
+  `−` is an incomplete control, not a simpler one.
   The `.meta` block's height must stay measured, not guessed: `VGrid.measureMetaH()`
   renders a hidden probe at the real column width and reads its true height, because a
   hardcoded estimate silently drifts out of sync with row height (absolute-positioned
   rows) the next time type or padding changes, producing card-to-card overlap.
-- **Civilization chip** — dim by default; on press it takes its own color as both text and
-  a 14%-alpha ground, and the dot ticks up in scale over 160ms to confirm the click.
+- **Deck view** — the drawer is a *summary*; the deck itself is seen as cards. "View deck
+  as cards" turns the grid into the deck, one tile per copy, in deck order, with a banner
+  naming the deck and a way back. Emptying the deck from inside the view exits it rather
+  than leaving a blank grid.
+- **Buttons** — filled surfaces, never dim outlines: the whole control carries the color
+  and the label sits at full contrast on it (all ≥6:1 measured). Civilization chips take
+  their civilization's color as the fill of the entire chip, with dark ink on top when
+  selected — the color *is* the label, so it is never reduced to a dot beside gray text.
+  Destructive actions (Empty) wear the Fire hue on the surface itself, not only on hover.
 - **Modal** — scale `0.96 → 1` plus fade over 200ms in, 110ms out. Carries prev/next, a
   quantity stepper, and search-term highlighting in the rules text.
 - **Deck drawer** — slides on `transform` (never an animated layout property). Advisory
