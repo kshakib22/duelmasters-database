@@ -162,11 +162,16 @@
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    padding-right: 26px;
+    padding-right: 28px;
     appearance: none;
     -webkit-appearance: none;
     background-repeat: no-repeat;
     background-position: right 9px center;
+    background-size: 11px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23a2a8ba' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  }
+  select.active {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f9dff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   }
   select option { background: var(--bg-elev-2); color: var(--text); }
   select.active {
@@ -342,6 +347,49 @@
     z-index: 3;
     animation: qtyPop 140ms var(--ease-out);
   }
+  /* Add-to-deck: the primary discoverability fix — a real, always-visible-on-touch
+     control on every card, not something only found by opening the modal. */
+  .card .addBtn {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 3;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--border-strong);
+    background: rgba(11,13,18,0.72);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity var(--t-fast) var(--ease-out),
+                transform var(--t-fast) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out);
+  }
+  .card:hover .addBtn,
+  .card:focus-visible .addBtn,
+  .card.inDeck .addBtn {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .card .addBtn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0b0d12;
+  }
+  .card .addBtn:active { transform: scale(0.9); }
+  /* Touch devices have no hover — the button must be visible from the start there. */
+  .no-hover .card .addBtn { opacity: 1; transform: scale(1); }
   @keyframes qtyPop {
     from { transform: scale(0.6); opacity: 0; }
     to   { transform: scale(1); opacity: 1; }
@@ -371,28 +419,27 @@
     padding: 10px;
     line-height: 1.4;
   }
-  .card .meta { padding: 7px 9px 9px; }
+  .card .meta { display: block; padding: 9px 10px 10px; text-align: center; }
   .card .name {
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
-    line-height: 1.28;
+    line-height: 1.3;
     letter-spacing: -0.01em;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.56em;
+    height: 2.6em; /* always reserve 2 lines so every card in a row is the same height */
   }
   .card .sub {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-faint);
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     gap: 6px;
   }
-  .card .sub .cost { display: inline-flex; align-items: center; color: var(--text-dim); }
 
   .civ-dot {
     display: inline-block;
@@ -739,6 +786,13 @@
     flex-wrap: wrap;
   }
   #deckFoot .btn { flex: 1 1 auto; }
+  .deckFootHint {
+    flex: 1 1 100%;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
 
   /* Deck spine — collapsed handle */
   #deckSpine {
@@ -940,6 +994,7 @@
     <button class="btn" id="exportBtn">Export</button>
     <button class="btn" id="importBtn">Import</button>
     <button class="btn ghost" id="emptyDeckBtn">Empty</button>
+    <div class="deckFootHint">This page's address bar always contains your current deck — copy it any time, or use the button above.</div>
   </div>
 </aside>
 
@@ -1133,15 +1188,35 @@ const VGrid = {
   first: -1,
   last: -1,
 
+  metaH: 0,
+
+  measureMetaH(colW) {
+    // Measure the real rendered height of a two-line name + sub row rather than
+    // guessing — font-size/padding tweaks would otherwise silently reintroduce
+    // row overlap since cards are absolutely positioned by this height.
+    const probe = document.createElement("div");
+    probe.className = "card";
+    probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:${colW}px;left:-9999px;top:-9999px;`;
+    probe.innerHTML = `<span class="meta"><span class="name">Probe Card Name Two Lines</span><span class="sub">&nbsp;</span></span>`;
+    document.body.appendChild(probe);
+    const h = probe.querySelector(".meta").getBoundingClientRect().height;
+    document.body.removeChild(probe);
+    return Math.ceil(h);
+  },
+
   measure() {
     const w = grid.clientWidth || window.innerWidth;
-    const min = window.innerWidth <= 720 ? 118 : 150;
+    const min = window.innerWidth <= 720 ? 140 : 170;
     this.gap = window.innerWidth <= 720 ? 10 : 14;
     this.cols = Math.max(2, Math.floor((w + this.gap) / (min + this.gap)));
     grid.style.setProperty("--cols", this.cols);
     const colW = (w - this.gap * (this.cols - 1)) / this.cols;
-    // image is 5:7, meta block is a fixed ~54px
-    this.cardH = Math.round(colW * 7 / 5) + 54;
+    if (!this.metaH || Math.abs(colW - (this._lastColW || 0)) > 2) {
+      this.metaH = this.measureMetaH(colW);
+      this._lastColW = colW;
+    }
+    // image is 5:7, meta block height is measured from real markup (see measureMetaH)
+    this.cardH = Math.round(colW * 7 / 5) + this.metaH + 1; // +1: fractional-pixel safety margin
     this.rowH = this.cardH + this.gap;
   },
 
@@ -1181,6 +1256,10 @@ const VGrid = {
     this.rendered.forEach((el, i) => {
       if (i < a || i > b) { el.remove(); this.rendered.delete(i); }
     });
+    // a forced layout (column count or row height changed) must reposition
+    // cards that are staying too, not just ones newly entering the range —
+    // otherwise they keep stale offsets from the previous column count.
+    if (force) this.rendered.forEach((el, i) => this.position(el, i));
     // add what scrolled in
     const frag = document.createDocumentFragment();
     for (let i = a; i <= b; i++) {
@@ -1237,6 +1316,7 @@ function buildCardEl(c, index) {
   const src = imgSrc(c);
   el.innerHTML = `
     ${qty ? `<span class="qty">${qty}</span>` : ""}
+    <span class="addBtn" role="button" tabindex="-1" aria-label="${qty ? "Add another copy to deck" : "Add to deck"}">+</span>
     <span class="imgwrap">
       ${src
         ? `<img loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="">`
@@ -1244,10 +1324,7 @@ function buildCardEl(c, index) {
     </span>
     <span class="meta">
       <span class="name">${escapeHtml(c.name || "(unnamed)")}</span>
-      <span class="sub">
-        <span class="cost">${civDotHtml(c)}${c.mana_cost != null ? c.mana_cost : "–"}</span>
-        <span>${escapeHtml(c.set || "")}</span>
-      </span>
+      <span class="sub">${civDotHtml(c)}<span>${escapeHtml(c.set || "")}</span></span>
     </span>`;
   const img = el.querySelector("img");
   if (img) {
@@ -1257,6 +1334,11 @@ function buildCardEl(c, index) {
       img.parentElement.innerHTML = '<span class="noimg">Image unavailable</span>';
     }, { once: true });
   }
+  el.querySelector(".addBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    addToDeck(c, 1);
+    toast(`Added ${c.name || "card"} to deck`);
+  });
   el.addEventListener("click", () => openModal(c));
   return el;
 }
@@ -1459,7 +1541,7 @@ function renderDeck() {
   // grouped list
   const list = $("deckList");
   if (!entries.length) {
-    list.innerHTML = `<div class="deckEmpty">Your deck is empty.<br>Open any card and press <b>+</b>, or hover a card in the grid.</div>`;
+    list.innerHTML = `<div class="deckEmpty">Your deck is empty.<br>Click the <b>+</b> on any card in the grid to add it.</div>`;
     return;
   }
   const groups = { Creature: [], "Evolution Creature": [], Spell: [] };
@@ -1855,6 +1937,7 @@ async function init() {
       if (c) openModal(c, { silent: true });
     }
     if (!fromUrl.card && !("ontouchstart" in window)) searchInput.focus({ preventScroll: true });
+    document.body.classList.toggle("no-hover", matchMedia("(hover: none)").matches);
   } catch (err) {
     $("loading").innerHTML =
       `<div style="max-width:52ch;margin:0 auto;line-height:1.6">

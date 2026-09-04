@@ -79,9 +79,16 @@ feedback.
 
 - **Instrument rail** — sticky, blurred, hairline-bottomed. Title + live count, then a
   full-width search, then civilization chips and compact selects. Wraps rather than clips.
-- **Card** — a `<button>` (not a div), 5:7 scan, two-line clamped name, cost + set footer.
+- **Card** — a `<button>` (not a div), 5:7 scan, two-line clamped name, a centered civ-dot
+  + set footer (no mana number here — it's already printed on the card art itself).
   Images fade in on load; a failed image degrades to a labeled tile, never a broken icon.
-  Deck membership shows as an accent border plus a quantity badge.
+  Deck membership shows as an accent border plus a quantity badge (top-right). A "+"
+  add-to-deck control (top-left) is visible on hover/focus on desktop and always visible
+  on touch devices (`hover: none`) — the primary way to discover deck building exists.
+  The `.meta` block's height must stay measured, not guessed: `VGrid.measureMetaH()`
+  renders a hidden probe at the real column width and reads its true height, because a
+  hardcoded estimate silently drifts out of sync with row height (absolute-positioned
+  rows) the next time type or padding changes, producing card-to-card overlap.
 - **Civilization chip** — dim by default; on press it takes its own color as both text and
   a 14%-alpha ground, and the dot ticks up in scale over 160ms to confirm the click.
 - **Modal** — scale `0.96 → 1` plus fade over 200ms in, 110ms out. Carries prev/next, a
