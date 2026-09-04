@@ -1,2 +1,5 @@
 .DS_Store
 Thumbs.db
+
+# Local design-tooling install (17MB binary) — not part of the site
+.claude/

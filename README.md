@@ -74,3 +74,40 @@ here for later:
   currently only searchable as free text.
 - Deck-builder / mana-curve tools, once the "just browse and study the database" use case
   is solid.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| `/` | Focus the search field |
+| `←` `→` `↑` `↓` | Move between cards in the grid |
+| `Enter` / `Space` | Open the focused card |
+| `←` `→` (modal open) | Previous / next card |
+| `+` / `−` | Add / remove one copy of the focused (or open) card |
+| `d` | Toggle the deck drawer |
+| `Esc` | Close the modal, then the drawer |
+
+## Deck builder
+
+A no-backend deck workbench lives in the right-hand drawer (press `d`, or the **Deck**
+spine at the bottom-right).
+
+- **Storage**: decks live in the browser's `localStorage` and in the URL — there is no
+  server and no account. Clearing site data clears the deck, so use **Export** or
+  **Copy share link** for anything you want to keep.
+- **Sharing**: **Copy share link** puts the whole state (filters, open card, and the full
+  deck) into the URL. Paste it anywhere; opening it restores exactly that view.
+- **Deck code**: the compact `id*qty.id*qty` string at the end of an export. **Import**
+  accepts either a bare code or a full share link.
+- **Rules are advisory, never enforced.** The panel reports the 40-card minimum, the
+  4-copy-per-card limit and civilization spread as notices, but never blocks you — the
+  point is fast experimentation with combinations. This matches the upstream shobu.io
+  engine, which performs no deck-size or copy-count validation server-side either (its
+  `40` is a client-side constant in a dev harness, not a game rule).
+- The mana curve and civilization balance bar are computed from real card data, live.
+
+## Performance
+
+The grid is virtualized: only the rows near the viewport exist in the DOM (roughly 50
+cards instead of 1010), so scrolling stays smooth on phones. Search, filter and sort run
+against a haystack precomputed once at load.

@@ -4,113 +4,349 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Duel Masters Card Database</title>
+<meta name="description" content="Searchable database of every Duel Masters card from DM-01 to DM-12 plus Promos — 1010 cards with full rules text, flavor text and scans.">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://scans.shobu.io" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d0f14;
-    --bg-elev: #161922;
-    --bg-elev-2: #1e2230;
-    --border: #2a2f3f;
-    --text: #e8e9ee;
-    --text-dim: #9a9fb0;
-    --accent: #7c8bff;
-    --fire: #ff5f4d;
-    --water: #3fa9f5;
-    --nature: #4dd67a;
-    --light: #f5d547;
-    --darkness: #b06bd6;
+    --bg: #0b0d12;
+    --bg-elev: #14171f;
+    --bg-elev-2: #1c202b;
+    --bg-elev-3: #252a38;
+    --border: #272c3a;
+    --border-strong: #394054;
+    --text: #eceef4;
+    --text-dim: #a2a8ba;
+    --text-faint: #8b92a6;
+    --accent: #8f9dff;
+    --accent-dim: rgba(143,157,255,0.15);
+    --fire: #ff6b52;
+    --water: #45a9f5;
+    --nature: #4fd97f;
+    --light: #f7d64a;
+    --darkness: #bb74dd;
     --radius: 10px;
+    --radius-lg: 14px;
+
+    /* Motion — every value below is a ceiling, not a target. */
+    --t-instant: 90ms;
+    --t-fast: 120ms;
+    --t-base: 150ms;
+    --t-modal: 200ms;
+    --t-exit: 110ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.5, 0, 0.85, 0.3);
+
+    --display: "Chivo", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
   }
+
   * { box-sizing: border-box; }
+
+  html { scrollbar-color: var(--bg-elev-3) var(--bg); }
+  ::selection { background: var(--accent); color: #0b0d12; }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-elev-3);
+    border-radius: 100px;
+    border: 3px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #333a4d; }
+
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--body);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
   }
+
+  h1, h2, h3, .name, .tag, .label, button, select, .statNum, .kbd {
+    font-family: var(--display);
+  }
+
+  /* Focus: tight ring that respects border-radius, appears instantly. */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+    border-radius: 6px;
+  }
+  .card:focus-visible {
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent),
+                0 14px 28px -8px rgba(0,0,0,0.7);
+    border-radius: var(--radius);
+  }
+
+  /* ---------- Instrument rail ---------- */
   header {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(13,15,20,0.92);
-    backdrop-filter: blur(10px);
+    background: rgba(11,13,18,0.9);
+    backdrop-filter: blur(14px) saturate(140%);
     border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
+    padding: 12px 20px 11px;
   }
-  header h1 {
-    margin: 0 0 12px 0;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+  .railTop {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
   }
   header h1 .count {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-dim);
+    font-family: var(--body);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-faint);
+    letter-spacing: 0;
+    transition: color var(--t-fast) var(--ease-out);
+  }
+  header h1 .count.flash { color: var(--accent); }
+
+  .searchWrap { position: relative; flex: 1 1 auto; min-width: 0; }
+  .searchWrap .kbd {
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-faint);
     background: var(--bg-elev-2);
-    padding: 3px 10px;
-    border-radius: 100px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    pointer-events: none;
+    transition: opacity var(--t-instant) var(--ease-out);
   }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .controls input[type="text"] {
-    flex: 1 1 240px;
-    min-width: 160px;
-  }
+  .searchWrap input:focus ~ .kbd,
+  .searchWrap input:not(:placeholder-shown) ~ .kbd { opacity: 0; }
+
   input[type="text"], select {
     background: var(--bg-elev);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 9px 12px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 8px 11px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: var(--body);
     outline: none;
+    transition: border-color var(--t-instant) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out);
   }
-  input[type="text"]:focus, select:focus {
+  input[type="text"] { width: 100%; }
+  input[type="text"]::placeholder { color: var(--text-faint); }
+  input[type="text"]:hover, select:hover { border-color: var(--border-strong); }
+  input[type="text"]:focus-visible, select:focus-visible {
     border-color: var(--accent);
-  }
-  select { cursor: pointer; }
-  #clearBtn {
     background: var(--bg-elev-2);
+  }
+  select {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding-right: 26px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+  }
+  select option { background: var(--bg-elev-2); color: var(--text); }
+  select.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: var(--accent-dim);
+  }
+
+  .railBottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+  }
+
+  /* Civilization chips — the only saturated hues on the surface. */
+  .civChips { display: flex; gap: 5px; }
+  .civChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-elev);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    padding: 9px 14px;
-    border-radius: 8px;
-    font-size: 14px;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 11px 7px 9px;
+    border-radius: 7px;
     cursor: pointer;
+    transition: color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out),
+                transform var(--t-instant) var(--ease-out);
   }
-  #clearBtn:hover { color: var(--text); border-color: var(--accent); }
+  .civChip:hover { color: var(--text); border-color: var(--border-strong); }
+  .civChip:active { transform: scale(0.96); }
+  .civChip .civ-dot { margin: 0; transition: transform var(--t-instant) var(--ease-out); }
+  .civChip[aria-pressed="true"] {
+    color: var(--text);
+    border-color: currentColor;
+  }
+  .civChip[aria-pressed="true"] .civ-dot { transform: scale(1.35); }
+  @keyframes civTick {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.7); }
+    100% { transform: scale(1.35); }
+  }
+  .civChip.justPressed .civ-dot { animation: civTick 160ms var(--ease-out); }
 
-  main { padding: 20px; }
+  .btn {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out),
+                transform var(--t-instant) var(--ease-out);
+  }
+  .btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .btn:active { transform: scale(0.96); }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0b0d12;
+    font-weight: 700;
+  }
+  .btn.primary:hover { background: #a3aeff; border-color: #a3aeff; color: #0b0d12; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; }
+
+  #clearBtn {
+    margin-left: auto;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.94);
+    transition: opacity var(--t-fast) var(--ease-out),
+                transform var(--t-fast) var(--ease-out),
+                color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out);
+  }
+  #clearBtn.show { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+  /* ---------- Binder grid ---------- */
+  main {
+    padding: 18px 20px 0;
+  }
+  body.deckOpen main { padding-right: 340px; }
+  body.deckOpen header { padding-right: 356px; }
+
   #emptyState {
     text-align: center;
-    color: var(--text-dim);
-    padding: 60px 20px;
+    padding: 70px 20px;
     display: none;
   }
-  #grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
+  #emptyState.show { display: block; }
+  #emptyState .big {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
   }
+  #emptyState .small { color: var(--text-dim); font-size: 13px; }
+
+  /* The grid is a positioned canvas; rows are absolutely placed by the virtualizer. */
+  #gridScroll { position: relative; }
+  #grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 7), 1fr);
+    gap: 14px;
+    align-content: start;
+  }
+
   .card {
+    position: relative;
     background: var(--bg-elev);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    text-align: left;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    display: block;
+    /* Two separate curves: fast lift out, fast settle back. */
+    transition: transform var(--t-fast) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out),
+                box-shadow var(--t-fast) var(--ease-out);
+  }
+  .card::after {
+    /* civ edge tint — the coding system, not decoration */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    box-shadow: inset 0 0 0 1px var(--civEdge, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-fast) var(--ease-out);
   }
   .card:hover {
-    transform: translateY(-3px);
-    border-color: var(--accent);
-    box-shadow: 0 8px 24px rgba(124,139,255,0.15);
+    transform: translateY(-4px) scale(1.025);
+    border-color: var(--border-strong);
+    box-shadow: 0 14px 28px -8px rgba(0,0,0,0.75),
+                0 3px 8px -2px rgba(0,0,0,0.5);
+    z-index: 2;
   }
+  .card:hover::after { opacity: 1; }
+  .card:active {
+    transform: translateY(-1px) scale(0.985);
+    transition-duration: 80ms;
+  }
+  .card.inDeck { border-color: var(--accent); }
+  .card.inDeck .qty {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #0b0d12;
+    border-radius: 5px;
+    padding: 2px 6px;
+    z-index: 3;
+    animation: qtyPop 140ms var(--ease-out);
+  }
+  @keyframes qtyPop {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
   .card .imgwrap {
     aspect-ratio: 5 / 7;
     background: var(--bg-elev-2);
@@ -124,33 +360,40 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    opacity: 0;
+    transition: opacity var(--t-base) var(--ease-out);
   }
-  .card .noimg {
-    color: var(--text-dim);
-    font-size: 12px;
+  .card img.loaded { opacity: 1; }
+  .noimg {
+    color: var(--text-faint);
+    font-size: 11px;
     text-align: center;
     padding: 10px;
+    line-height: 1.4;
   }
-  .card .meta {
-    padding: 8px 10px 10px;
-  }
+  .card .meta { padding: 7px 9px 9px; }
   .card .name {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.28;
+    letter-spacing: -0.01em;
     margin-bottom: 4px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.56em;
   }
   .card .sub {
     font-size: 11px;
-    color: var(--text-dim);
+    color: var(--text-faint);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 6px;
   }
+  .card .sub .cost { display: inline-flex; align-items: center; color: var(--text-dim); }
+
   .civ-dot {
     display: inline-block;
     width: 8px;
@@ -158,338 +401,1469 @@
     border-radius: 50%;
     margin-right: 5px;
     vertical-align: middle;
+    flex: none;
   }
-  .civ-Fire { background: var(--fire); }
-  .civ-Water { background: var(--water); }
-  .civ-Nature { background: var(--nature); }
-  .civ-Light { background: var(--light); }
-  .civ-Darkness { background: var(--darkness); }
+  .civ-dot.dual {
+    /* dual-civ cards read as a split dot, not a single wrong colour */
+    background: linear-gradient(90deg, var(--c1) 0 50%, var(--c2) 50% 100%) !important;
+  }
+  .civ-dot.civ-Fire { background: var(--fire); }
+  .civ-dot.civ-Water { background: var(--water); }
+  .civ-dot.civ-Nature { background: var(--nature); }
+  .civ-dot.civ-Light { background: var(--light); }
+  .civ-dot.civ-Darkness { background: var(--darkness); }
+  .civChip[aria-pressed="true"].civ-Fire { color: var(--fire); }
+  .civChip[aria-pressed="true"].civ-Water { color: var(--water); }
+  .civChip[aria-pressed="true"].civ-Nature { color: var(--nature); }
+  .civChip[aria-pressed="true"].civ-Light { color: var(--light); }
+  .civChip[aria-pressed="true"].civ-Darkness { color: var(--darkness); }
+  .civChip[aria-pressed="true"].civ-Fire { background: rgba(255,107,82,0.14); }
+  .civChip[aria-pressed="true"].civ-Water { background: rgba(69,169,245,0.14); }
+  .civChip[aria-pressed="true"].civ-Nature { background: rgba(79,217,127,0.14); }
+  .civChip[aria-pressed="true"].civ-Light { background: rgba(247,214,74,0.14); }
+  .civChip[aria-pressed="true"].civ-Darkness { background: rgba(187,116,221,0.14); }
 
-  /* Modal */
+  /* ---------- Modal ---------- */
   #overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(3,4,7,0.72);
     z-index: 50;
     align-items: flex-start;
     justify-content: center;
     padding: 40px 16px;
     overflow-y: auto;
+    opacity: 0;
+    transition: opacity var(--t-exit) var(--ease-in);
   }
-  #overlay.open { display: flex; }
+  #overlay.mounted { display: flex; }
+  #overlay.open {
+    opacity: 1;
+    transition: opacity var(--t-fast) var(--ease-out);
+  }
   #modal {
     background: var(--bg-elev);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    max-width: 780px;
+    border-radius: var(--radius-lg);
+    max-width: 820px;
     width: 100%;
     padding: 24px;
     position: relative;
+    box-shadow: 0 32px 64px -16px rgba(0,0,0,0.8);
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+    transition: opacity var(--t-exit) var(--ease-in),
+                transform var(--t-exit) var(--ease-in);
   }
-  #modal .closeBtn {
+  #overlay.open #modal {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity var(--t-modal) var(--ease-out),
+                transform var(--t-modal) var(--ease-out);
+  }
+  .modalNav {
     position: absolute;
     top: 16px;
     right: 16px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+  }
+  .iconBtn {
     background: var(--bg-elev-2);
     border: 1px solid var(--border);
-    color: var(--text);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    color: var(--text-dim);
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
     cursor: pointer;
-    font-size: 16px;
+    font-family: var(--display);
+    font-size: 14px;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--t-instant) var(--ease-out),
+                border-color var(--t-instant) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out),
+                transform var(--t-instant) var(--ease-out);
   }
-  #modal .modalBody {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-  #modal .modalImg {
-    flex: 0 0 260px;
-    max-width: 260px;
-  }
+  .iconBtn:hover { color: var(--text); border-color: var(--border-strong); background: var(--bg-elev-3); }
+  .iconBtn:active { transform: scale(0.9); }
+  .iconBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .iconBtn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  #modal .modalBody { display: flex; gap: 24px; flex-wrap: wrap; }
+  #modal .modalImg { flex: 0 0 262px; max-width: 262px; }
   #modal .modalImg img {
     width: 100%;
-    border-radius: 10px;
+    border-radius: var(--radius);
     border: 1px solid var(--border);
+    display: block;
   }
-  #modal .modalInfo {
-    flex: 1 1 320px;
-    min-width: 260px;
-  }
+  #modal .modalInfo { flex: 1 1 340px; min-width: 260px; }
   #modal h2 {
-    margin: 0 0 4px 0;
-    font-size: 22px;
+    margin: 0 0 2px 0;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    padding-right: 96px;
   }
-  #modal .tagRow {
+  #modal .setline { color: var(--text-faint); font-size: 12.5px; margin-bottom: 12px; }
+  #modal .tagRow { display: flex; gap: 5px; flex-wrap: wrap; margin: 0 0 16px; }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 5px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+  }
+  .tag.civTag { color: var(--tagColor); border-color: var(--tagColor); background: transparent; }
+
+  .statRow {
+    display: flex;
+    gap: 22px;
+    padding: 11px 0 13px;
+    margin-bottom: 4px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat .statNum { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; display: block; line-height: 1.1; }
+  .stat .statNum.na { color: var(--text-faint); font-weight: 400; font-size: 15px; }
+
+  .field { margin-top: 14px; }
+  .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+  .value { font-size: 13.5px; line-height: 1.55; white-space: pre-line; max-width: 68ch; }
+  .value.flavor { font-style: italic; color: var(--text-dim); }
+  .value.missing { color: var(--text-faint); font-style: italic; }
+  .value mark { background: var(--accent-dim); color: var(--text); border-radius: 3px; padding: 0 2px; }
+
+  .modalActions { display: flex; gap: 7px; margin-top: 18px; flex-wrap: wrap; align-items: center; }
+  .qtyStepper { display: inline-flex; align-items: center; gap: 8px; }
+  .qtyStepper .n { font-family: var(--display); font-weight: 700; font-size: 14px; min-width: 34px; text-align: center; }
+
+  /* ---------- Deck drawer ---------- */
+  #deckDrawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 340px;
+    background: var(--bg-elev);
+    border-left: 1px solid var(--border);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform var(--t-base) var(--ease-in);
+    will-change: transform;
+  }
+  body.deckOpen #deckDrawer {
+    transform: translateX(0);
+    transition: transform var(--t-base) var(--ease-out);
+  }
+  #deckDrawer header {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    padding: 14px 16px 12px;
+    flex: none;
+  }
+  .deckTitleRow { display: flex; align-items: center; gap: 8px; }
+  #deckName {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    padding: 5px 7px;
+    border-radius: 6px;
+  }
+  #deckName:hover { border-color: var(--border); }
+  #deckName:focus-visible { border-color: var(--accent); background: var(--bg-elev-2); }
+
+  .deckCount {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+    padding: 3px 8px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    flex: none;
+  }
+  .deckCount.legal { color: var(--nature); border-color: rgba(79,217,127,0.4); }
+
+  /* Civilization balance bar — the deck's identity at a glance. */
+  .civBar {
+    display: flex;
+    height: 7px;
+    border-radius: 100px;
+    overflow: hidden;
+    margin: 12px 0 10px;
+    background: var(--bg-elev-2);
+  }
+  .civBar span {
+    transition: flex-grow var(--t-base) var(--ease-out);
+    min-width: 0;
+  }
+
+  .notices { display: flex; flex-direction: column; gap: 5px; }
+  .notice {
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--text-dim);
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .notice::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--light);
+    flex: none;
+    margin-top: 5px;
+  }
+  .notice.ok::before { background: var(--nature); }
+
+  /* Mana curve — real data, not a decorative sparkline. */
+  .curve { display: flex; align-items: stretch; gap: 3px; height: 54px; margin: 12px 0 4px; }
+  .curveCol { flex: 1; display: grid; grid-template-rows: 1fr auto; align-items: end; gap: 3px; }
+  .curveBar {
+    width: 100%;
+    background: var(--bg-elev-3);
+    border-radius: 3px 3px 0 0;
+    min-height: 2px;
+    transition: height var(--t-base) var(--ease-out), background-color var(--t-instant) var(--ease-out);
+  }
+  .curveCol.has .curveBar { background: var(--accent); }
+  .curveLabel { font-family: var(--display); font-size: 9px; font-weight: 600; color: var(--text-faint); }
+
+  #deckList {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 10px 10px;
+    min-height: 0;
+  }
+  .deckGroup { margin-bottom: 10px; }
+  .deckGroupLabel {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-faint);
+    padding: 6px 6px 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .deckRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color var(--t-instant) var(--ease-out);
+  }
+  .deckRow:hover { background: var(--bg-elev-2); }
+  .deckRow .rowQty {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--bg-elev-2);
+    border-radius: 4px;
+    padding: 2px 5px;
+    flex: none;
+    min-width: 26px;
+    text-align: center;
+  }
+  .deckRow.over .rowQty { color: var(--light); }
+  .deckRow .rowName {
+    flex: 1 1 auto;
+    font-size: 12.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .deckRow .rowCost { font-size: 11px; color: var(--text-faint); flex: none; }
+  .deckRow .rowDel {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+    border-radius: 4px;
+    flex: none;
+    transition: opacity var(--t-instant) var(--ease-out), color var(--t-instant) var(--ease-out);
+  }
+  .deckRow:hover .rowDel { opacity: 1; }
+  .deckRow .rowDel:hover { color: var(--fire); }
+  .deckRow .rowDel:focus-visible { opacity: 1; }
+  .deckRow.leaving {
+    animation: rowOut 110ms var(--ease-in) forwards;
+  }
+  @keyframes rowOut {
+    to { opacity: 0; transform: translateX(10px); }
+  }
+
+  .deckEmpty { padding: 26px 14px; text-align: center; color: var(--text-faint); font-size: 12.5px; line-height: 1.5; }
+
+  #deckFoot {
+    flex: none;
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--border);
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-    margin: 10px 0 16px;
   }
-  .tag {
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 100px;
+  #deckFoot .btn { flex: 1 1 auto; }
+
+  /* Deck spine — collapsed handle */
+  #deckSpine {
+    position: fixed;
+    right: 0;
+    bottom: 22px;
+    z-index: 29;
     background: var(--bg-elev-2);
     border: 1px solid var(--border);
-    color: var(--text-dim);
+    border-right: none;
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 14px;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: -6px 0 18px -6px rgba(0,0,0,0.6);
+    transition: transform var(--t-fast) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out);
   }
-  .field { margin-bottom: 14px; }
-  .field .label {
+  #deckSpine:hover { background: var(--bg-elev-3); transform: translateX(-2px); }
+  #deckSpine:active { transform: translateX(0) scale(0.97); }
+  body.deckOpen #deckSpine { transform: translateX(100%); pointer-events: none; }
+  #deckSpine .n {
+    background: var(--accent);
+    color: #0b0d12;
+    border-radius: 5px;
+    padding: 1px 6px;
     font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-dim);
-    margin-bottom: 3px;
   }
-  .field .value {
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-line;
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    z-index: 60;
+    transform: translate(-50%, 12px);
+    background: var(--bg-elev-3);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 9px 15px;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px -8px rgba(0,0,0,0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-exit) var(--ease-in), transform var(--t-exit) var(--ease-in);
   }
-  .field .value.flavor {
-    font-style: italic;
-    color: var(--text-dim);
+  #toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    transition: opacity var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
   }
-  .field .value.missing {
-    color: var(--text-dim);
-    font-style: italic;
+
+  /* ---------- Loading ---------- */
+  #loading {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 13px;
   }
+  #loading.hide { display: none; }
 
   footer {
     text-align: center;
-    color: var(--text-dim);
-    font-size: 12px;
-    padding: 30px 20px 50px;
+    color: var(--text-faint);
+    font-size: 11.5px;
+    line-height: 1.7;
+    padding: 34px 20px 46px;
+  }
+  footer a { color: var(--text-dim); text-decoration: none; border-bottom: 1px solid var(--border); }
+  footer a:hover { color: var(--accent); border-color: var(--accent); }
+
+  .srOnly {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
 
-  @media (max-width: 480px) {
-    #grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-    header h1 { font-size: 17px; }
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    body.deckOpen main { padding-right: 20px; }
+    body.deckOpen header { padding-right: 20px; }
+    #deckDrawer { box-shadow: -16px 0 40px -12px rgba(0,0,0,0.7); }
+  }
+  @media (max-width: 720px) {
+    header { padding: 10px 12px 10px; }
+    .railTop { flex-wrap: wrap; gap: 9px; }
+    header h1 { font-size: 14px; width: 100%; }
+    .searchWrap { flex-basis: 100%; }
+    .railBottom { gap: 6px; }
+    .civChips { width: 100%; }
+    .civChip { flex: 1; justify-content: center; padding: 8px 4px; }
+    .civChip .civLabel { display: none; }
+    .civChip .civ-dot { width: 10px; height: 10px; }
+    #clearBtn { margin-left: 0; }
+    main { padding: 14px 12px 0; }
+    #grid { gap: 10px; }
+    #modal { padding: 18px 16px; }
+    #modal h2 { font-size: 20px; padding-right: 80px; }
+    #modal .modalImg { flex: 0 0 100%; max-width: 220px; margin: 0 auto; }
+    #deckDrawer { width: 100%; }
+    body.deckOpen main { padding-right: 12px; }
+    body.deckOpen header { padding-right: 12px; }
+  }
+
+  /* ---------- Reduced motion ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    /* Keep meaning-carrying state changes legible, just instant. */
+    .card:hover { transform: none; }
+    .card:active { transform: none; }
+    #overlay.open #modal { transform: none; }
+    #modal { transform: none; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Duel Masters Card Database <span class="count" id="resultCount">— loading —</span></h1>
-  <div class="controls">
-    <input type="text" id="searchInput" placeholder="Search name, rules text, flavor text, illustrator...">
-    <select id="civFilter"><option value="">Any civilization</option></select>
-    <select id="typeFilter"><option value="">Any type</option></select>
-    <select id="rarityFilter"><option value="">Any rarity</option></select>
-    <select id="setFilter"><option value="">Any set</option></select>
-    <select id="manaFilter"><option value="">Any mana cost</option></select>
-    <select id="sortSelect">
-      <option value="name-asc">Name A-Z</option>
-      <option value="name-desc">Name Z-A</option>
-      <option value="mana-asc">Mana cost: low-high</option>
-      <option value="mana-desc">Mana cost: high-low</option>
+  <div class="railTop">
+    <h1>
+      <span>Duel Masters</span>
+      <span class="count" id="resultCount">loading…</span>
+    </h1>
+    <div class="searchWrap">
+      <input type="text" id="searchInput" autocomplete="off" spellcheck="false"
+             placeholder="Search name, rules text, flavor text, illustrator…"
+             aria-label="Search cards">
+      <span class="kbd">/</span>
+    </div>
+  </div>
+  <div class="railBottom">
+    <div class="civChips" id="civChips" role="group" aria-label="Filter by civilization"></div>
+    <select id="typeFilter" aria-label="Type"><option value="">Any type</option></select>
+    <select id="rarityFilter" aria-label="Rarity"><option value="">Any rarity</option></select>
+    <select id="setFilter" aria-label="Set"><option value="">Any set</option></select>
+    <select id="manaFilter" aria-label="Mana cost"><option value="">Any cost</option></select>
+    <select id="keywordFilter" aria-label="Keyword ability"><option value="">Any ability</option></select>
+    <select id="sortSelect" aria-label="Sort order">
+      <option value="name-asc">Name A–Z</option>
+      <option value="name-desc">Name Z–A</option>
+      <option value="mana-asc">Cost: low → high</option>
+      <option value="mana-desc">Cost: high → low</option>
+      <option value="power-desc">Power: high → low</option>
       <option value="set-asc">Set order</option>
     </select>
-    <button id="clearBtn">Clear filters</button>
+    <button class="btn" id="clearBtn">Clear filters</button>
   </div>
 </header>
 
 <main>
-  <div id="grid"></div>
-  <div id="emptyState">No cards match your filters.</div>
+  <div id="loading">Loading card data…</div>
+  <div id="gridScroll"><div id="grid"></div></div>
+  <div id="emptyState">
+    <div class="big">No cards match these filters.</div>
+    <div class="small">Try removing a civilization or clearing the search.</div>
+  </div>
 </main>
 
 <footer>
-  Duel Masters DM-01–DM-12 + Promos · data sourced from Kaggle + shobu.io + Duel Masters Fandom wiki
+  Duel Masters DM-01–DM-12 + Promos · 1010 cards<br>
+  Data from the Kaggle DM-01–06 dataset, shobu.io and the Duel Masters Fandom wiki.
+  Card images and names are property of their respective owners.
 </footer>
 
-<div id="overlay">
+<button id="deckSpine" aria-label="Open deck builder">
+  Deck <span class="n" id="spineCount">0</span>
+</button>
+
+<aside id="deckDrawer" aria-label="Deck builder" aria-hidden="true">
+  <header>
+    <div class="deckTitleRow">
+      <input type="text" id="deckName" value="Untitled deck" aria-label="Deck name" maxlength="60">
+      <span class="deckCount" id="deckCount">0</span>
+      <button class="iconBtn" id="deckCloseBtn" aria-label="Close deck builder">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="civBar" id="civBar" aria-hidden="true"></div>
+    <div class="notices" id="deckNotices"></div>
+    <div class="curve" id="curve" aria-hidden="true"></div>
+    <div class="label" style="text-align:center;margin:0">Mana curve</div>
+  </header>
+  <div id="deckList"></div>
+  <div id="deckFoot">
+    <button class="btn primary" id="shareBtn">Copy share link</button>
+    <button class="btn" id="exportBtn">Export</button>
+    <button class="btn" id="importBtn">Import</button>
+    <button class="btn ghost" id="emptyDeckBtn">Empty</button>
+  </div>
+</aside>
+
+<div id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div id="modal">
-    <button class="closeBtn" id="closeModalBtn">&times;</button>
+    <div class="modalNav">
+      <button class="iconBtn" id="prevBtn" aria-label="Previous card">
+        <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="iconBtn" id="nextBtn" aria-label="Next card">
+        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+      <button class="iconBtn" id="closeModalBtn" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
     <div class="modalBody" id="modalBody"></div>
   </div>
 </div>
 
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="srOnly" id="srStatus" role="status" aria-live="polite"></div>
+
 <script>
+"use strict";
+
 let ALL_CARDS = [];
 let FACETS = {};
+let RESULTS = [];
+let DECK = new Map();      // card id -> qty
+let deckOrder = [];        // preserves insertion order
+let modalCard = null;
 
-const grid = document.getElementById('grid');
-const emptyState = document.getElementById('emptyState');
-const resultCount = document.getElementById('resultCount');
-const searchInput = document.getElementById('searchInput');
-const civFilter = document.getElementById('civFilter');
-const typeFilter = document.getElementById('typeFilter');
-const rarityFilter = document.getElementById('rarityFilter');
-const setFilter = document.getElementById('setFilter');
-const manaFilter = document.getElementById('manaFilter');
-const sortSelect = document.getElementById('sortSelect');
-const clearBtn = document.getElementById('clearBtn');
-const overlay = document.getElementById('overlay');
-const modalBody = document.getElementById('modalBody');
-const closeModalBtn = document.getElementById('closeModalBtn');
+const CIVS = ["Light", "Water", "Darkness", "Fire", "Nature"];
+const CIV_COLOR = {
+  Light: "#f7d64a", Water: "#45a9f5", Darkness: "#bb74dd",
+  Fire: "#ff6b52", Nature: "#4fd97f"
+};
 
-function imgSrc(card) {
-  return card.image_url || card.image_local || '';
-}
+/* Keyword abilities are only present as prose inside rules_text; these patterns
+   turn them into real filters. Ordered as they appear in the card pool. */
+const KEYWORDS = [
+  ["Blocker",         /\bblocker\b/i],
+  ["Shield trigger",  /\bshield trigger\b/i],
+  ["Double breaker",  /\bdouble breaker\b/i],
+  ["Triple breaker",  /\btriple breaker\b/i],
+  ["Slayer",          /\bslayer\b/i],
+  ["Speed attacker",  /\bspeed attacker\b/i],
+  ["Power attacker",  /\bpower attacker\b/i],
+  ["Evolution",       null],
+  ["Can't be blocked", /can(?:'|’)t be blocked/i],
+  ["Draw a card",     /\bdraw (?:a card|\w+ cards?)\b/i],
+  ["Destroy",         /\bdestroy\b/i],
+  ["Search your deck",/\bsearch your deck\b/i],
+  ["Tap ability",     /\bwhenever this creature attacks\b|\btap(?:ped)? instead of attacking\b/i]
+];
 
-function populateSelect(sel, values) {
-  values.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v;
-    opt.textContent = v;
-    sel.appendChild(opt);
-  });
+const $ = (id) => document.getElementById(id);
+const grid = $("grid"), gridScroll = $("gridScroll"), emptyState = $("emptyState");
+const resultCount = $("resultCount"), searchInput = $("searchInput");
+const typeFilter = $("typeFilter"), rarityFilter = $("rarityFilter");
+const setFilter = $("setFilter"), manaFilter = $("manaFilter");
+const keywordFilter = $("keywordFilter"), sortSelect = $("sortSelect");
+const clearBtn = $("clearBtn"), civChips = $("civChips");
+const overlay = $("overlay"), modalBody = $("modalBody");
+const toastEl = $("toast"), srStatus = $("srStatus");
+
+const SELECTS = { type: typeFilter, rarity: rarityFilter, set: setFilter,
+                  mana: manaFilter, kw: keywordFilter };
+
+let activeCivs = new Set();
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s).replace(/[&<>"']/g, m =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 }
 
 function debounce(fn, ms) {
   let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
-function render() {
-  const q = searchInput.value.trim().toLowerCase();
-  const civ = civFilter.value;
-  const type = typeFilter.value;
-  const rarity = rarityFilter.value;
-  const set = setFilter.value;
-  const mana = manaFilter.value;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove("show"), 1900);
+}
 
-  let results = ALL_CARDS.filter(c => {
-    if (civ && c.civilization !== civ && c.civilization2 !== civ) return false;
-    if (type && c.type !== type) return false;
-    if (rarity && c.rarity !== rarity) return false;
-    if (set && c.set !== set) return false;
-    if (mana && String(c.mana_cost) !== mana) return false;
-    if (q) {
-      const hay = [c.name, c.rules_text, c.flavor_text, c.illustrator, c.abilities, c.race]
-        .filter(Boolean).join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
+/* ---------- Card helpers ---------- */
+
+function imgSrc(c) { return c.image_url || c.image_local || ""; }
+
+function civsOf(c) {
+  return [c.civilization, c.civilization2].filter(Boolean);
+}
+
+function civDotHtml(c) {
+  const cv = civsOf(c);
+  if (!cv.length) return "";
+  if (cv.length > 1) {
+    return `<span class="civ-dot dual" style="--c1:${CIV_COLOR[cv[0]] || "#666"};--c2:${CIV_COLOR[cv[1]] || "#666"}"></span>`;
+  }
+  return `<span class="civ-dot civ-${cv[0]}"></span>`;
+}
+
+function powerNum(c) {
+  const n = parseInt(String(c.power || "").replace(/[^0-9]/g, ""), 10);
+  return isNaN(n) ? -1 : n;
+}
+
+/* Precompute a search haystack and keyword flags once, at load. */
+function indexCards() {
+  ALL_CARDS.forEach(c => {
+    c._hay = [c.name, c.rules_text, c.flavor_text, c.illustrator, c.abilities, c.race]
+      .filter(Boolean).join(" ").toLowerCase();
+    c._power = powerNum(c);
+    c._sortSet = (c.set || "") + String(c.set_number || "").padStart(5, "0");
+    const text = [c.rules_text, c.abilities].filter(Boolean).join(" ");
+    c._kw = KEYWORDS.filter(([name, re]) =>
+      name === "Evolution" ? !!c.is_evolution : re.test(text)
+    ).map(([name]) => name);
+  });
+}
+
+/* ---------- Filtering ---------- */
+
+function currentFilters() {
+  return {
+    q: searchInput.value.trim().toLowerCase(),
+    civs: [...activeCivs],
+    type: typeFilter.value,
+    rarity: rarityFilter.value,
+    set: setFilter.value,
+    mana: manaFilter.value,
+    kw: keywordFilter.value,
+    sort: sortSelect.value
+  };
+}
+
+function computeResults() {
+  const f = currentFilters();
+  let out = ALL_CARDS.filter(c => {
+    if (f.civs.length) {
+      const cv = civsOf(c);
+      if (!f.civs.some(x => cv.includes(x))) return false;
     }
+    if (f.type && c.type !== f.type) return false;
+    if (f.rarity && c.rarity !== f.rarity) return false;
+    if (f.set && c.set !== f.set) return false;
+    if (f.mana && String(c.mana_cost) !== f.mana) return false;
+    if (f.kw && !c._kw.includes(f.kw)) return false;
+    if (f.q && !c._hay.includes(f.q)) return false;
     return true;
   });
 
-  const [sortKey, sortDir] = sortSelect.value.split('-');
-  results.sort((a, b) => {
+  const [key, dir] = f.sort.split("-");
+  const mul = dir === "asc" ? 1 : -1;
+  out.sort((a, b) => {
     let av, bv;
-    if (sortKey === 'name') { av = a.name || ''; bv = b.name || ''; }
-    else if (sortKey === 'mana') { av = a.mana_cost ?? -1; bv = b.mana_cost ?? -1; }
-    else if (sortKey === 'set') { av = (a.set || '') + a.set_number.padStart(5,'0'); bv = (b.set || '') + b.set_number.padStart(5,'0'); }
-    if (av < bv) return sortDir === 'asc' ? -1 : 1;
-    if (av > bv) return sortDir === 'asc' ? 1 : -1;
-    return 0;
+    if (key === "name") { av = a.name || ""; bv = b.name || ""; }
+    else if (key === "mana") { av = a.mana_cost ?? -1; bv = b.mana_cost ?? -1; }
+    else if (key === "power") { av = a._power; bv = b._power; }
+    else { av = a._sortSet; bv = b._sortSet; }
+    if (av < bv) return -1 * mul;
+    if (av > bv) return 1 * mul;
+    // stable tiebreak so equal costs/powers never shuffle between renders
+    return (a.name || "").localeCompare(b.name || "");
   });
-
-  resultCount.textContent = `${results.length.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()} cards`;
-
-  grid.innerHTML = '';
-  if (results.length === 0) {
-    emptyState.style.display = 'block';
-  } else {
-    emptyState.style.display = 'none';
-    const frag = document.createDocumentFragment();
-    results.forEach(c => frag.appendChild(buildCardEl(c)));
-    grid.appendChild(frag);
-  }
+  return out;
 }
 
-function buildCardEl(c) {
-  const el = document.createElement('div');
-  el.className = 'card';
+function anyFilterActive() {
+  const f = currentFilters();
+  return !!(f.q || f.civs.length || f.type || f.rarity || f.set || f.mana || f.kw);
+}
+
+/* ---------- Virtualized grid ----------
+   1010 cards is far too many DOM nodes for a phone. We render only the rows
+   near the viewport and pad with a spacer so the scrollbar stays honest. */
+
+const VGrid = {
+  cols: 7,
+  rowH: 0,
+  cardH: 0,
+  gap: 14,
+  rendered: new Map(),   // index -> element
+  first: -1,
+  last: -1,
+
+  measure() {
+    const w = grid.clientWidth || window.innerWidth;
+    const min = window.innerWidth <= 720 ? 118 : 150;
+    this.gap = window.innerWidth <= 720 ? 10 : 14;
+    this.cols = Math.max(2, Math.floor((w + this.gap) / (min + this.gap)));
+    grid.style.setProperty("--cols", this.cols);
+    const colW = (w - this.gap * (this.cols - 1)) / this.cols;
+    // image is 5:7, meta block is a fixed ~54px
+    this.cardH = Math.round(colW * 7 / 5) + 54;
+    this.rowH = this.cardH + this.gap;
+  },
+
+  totalRows() { return Math.ceil(RESULTS.length / this.cols); },
+
+  reset() {
+    this.rendered.forEach(el => el.remove());
+    this.rendered.clear();
+    this.first = -1; this.last = -1;
+  },
+
+  layout() {
+    this.measure();
+    const rows = this.totalRows();
+    gridScroll.style.height = rows > 0 ? (rows * this.rowH - this.gap) + "px" : "0px";
+    this.update(true);
+  },
+
+  visibleRange() {
+    const top = gridScroll.getBoundingClientRect().top;
+    const vh = window.innerHeight;
+    const overscan = 2;
+    let firstRow = Math.floor((-top) / this.rowH) - overscan;
+    let lastRow = Math.ceil((-top + vh) / this.rowH) + overscan;
+    firstRow = Math.max(0, firstRow);
+    lastRow = Math.min(this.totalRows() - 1, lastRow);
+    return [firstRow * this.cols, Math.min(RESULTS.length - 1, lastRow * this.cols + this.cols - 1)];
+  },
+
+  update(force) {
+    if (!RESULTS.length) { this.reset(); return; }
+    const [a, b] = this.visibleRange();
+    if (!force && a === this.first && b === this.last) return;
+    this.first = a; this.last = b;
+
+    // drop what scrolled away
+    this.rendered.forEach((el, i) => {
+      if (i < a || i > b) { el.remove(); this.rendered.delete(i); }
+    });
+    // add what scrolled in
+    const frag = document.createDocumentFragment();
+    for (let i = a; i <= b; i++) {
+      if (this.rendered.has(i)) continue;
+      const el = buildCardEl(RESULTS[i], i);
+      this.position(el, i);
+      this.rendered.set(i, el);
+      frag.appendChild(el);
+    }
+    if (frag.childNodes.length) grid.appendChild(frag);
+  },
+
+  position(el, i) {
+    const row = Math.floor(i / this.cols);
+    const col = i % this.cols;
+    el.style.position = "absolute";
+    el.style.top = (row * this.rowH) + "px";
+    el.style.left = `calc((100% - ${this.gap * (this.cols - 1)}px) / ${this.cols} * ${col} + ${this.gap * col}px)`;
+    el.style.width = `calc((100% - ${this.gap * (this.cols - 1)}px) / ${this.cols})`;
+  },
+
+  refreshCard(id) {
+    this.rendered.forEach((el, i) => {
+      if (RESULTS[i] && RESULTS[i].id === id) {
+        const fresh = buildCardEl(RESULTS[i], i);
+        this.position(fresh, i);
+        el.replaceWith(fresh);
+        this.rendered.set(i, fresh);
+      }
+    });
+  },
+
+  scrollToIndex(i) {
+    const row = Math.floor(i / this.cols);
+    const y = gridScroll.offsetTop + row * this.rowH;
+    const headerH = document.querySelector("header").offsetHeight + 12;
+    const cur = window.scrollY;
+    if (y - headerH < cur) window.scrollTo({ top: y - headerH, behavior: "auto" });
+    else if (y + this.cardH > cur + window.innerHeight)
+      window.scrollTo({ top: y + this.cardH - window.innerHeight + 16, behavior: "auto" });
+  }
+};
+
+function buildCardEl(c, index) {
+  const el = document.createElement("button");
+  el.className = "card";
+  el.type = "button";
+  el.dataset.index = index;
+  el.dataset.id = c.id;
+  const cv = civsOf(c);
+  if (cv.length) el.style.setProperty("--civEdge", CIV_COLOR[cv[0]] || "transparent");
+  const qty = DECK.get(c.id) || 0;
+  if (qty) el.classList.add("inDeck");
   const src = imgSrc(c);
-  const civDot = c.civilization ? `<span class="civ-dot civ-${c.civilization}"></span>` : '';
   el.innerHTML = `
-    <div class="imgwrap">
-      ${src ? `<img loading="lazy" src="${src}" alt="${escapeHtml(c.name)}" onerror="this.parentElement.innerHTML='<div class=noimg>Image unavailable</div>'">` : `<div class="noimg">No image</div>`}
-    </div>
-    <div class="meta">
-      <div class="name">${escapeHtml(c.name || '(unnamed)')}</div>
-      <div class="sub">
-        <span>${civDot}${c.mana_cost != null ? c.mana_cost : '-'}</span>
-        <span>${escapeHtml(c.set || '')}</span>
-      </div>
-    </div>
-  `;
-  el.addEventListener('click', () => openModal(c));
+    ${qty ? `<span class="qty">${qty}</span>` : ""}
+    <span class="imgwrap">
+      ${src
+        ? `<img loading="lazy" decoding="async" src="${escapeHtml(src)}" alt="">`
+        : `<span class="noimg">No image</span>`}
+    </span>
+    <span class="meta">
+      <span class="name">${escapeHtml(c.name || "(unnamed)")}</span>
+      <span class="sub">
+        <span class="cost">${civDotHtml(c)}${c.mana_cost != null ? c.mana_cost : "–"}</span>
+        <span>${escapeHtml(c.set || "")}</span>
+      </span>
+    </span>`;
+  const img = el.querySelector("img");
+  if (img) {
+    if (img.complete && img.naturalWidth) img.classList.add("loaded");
+    else img.addEventListener("load", () => img.classList.add("loaded"), { once: true });
+    img.addEventListener("error", () => {
+      img.parentElement.innerHTML = '<span class="noimg">Image unavailable</span>';
+    }, { once: true });
+  }
+  el.addEventListener("click", () => openModal(c));
   return el;
 }
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+/* ---------- Render ---------- */
 
-function field(label, value, opts) {
+function render(opts) {
   opts = opts || {};
-  const cls = opts.cls ? ` ${opts.cls}` : '';
-  const display = (value === null || value === undefined || value === '') ? '<span class="missing">Not available</span>' : escapeHtml(value);
-  return `<div class="field"><div class="label">${label}</div><div class="value${cls}">${display}</div></div>`;
+  RESULTS = computeResults();
+
+  const n = RESULTS.length;
+  resultCount.textContent = n === ALL_CARDS.length
+    ? `${n.toLocaleString()} cards`
+    : `${n.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()}`;
+  resultCount.classList.add("flash");
+  setTimeout(() => resultCount.classList.remove("flash"), 220);
+
+  emptyState.classList.toggle("show", n === 0);
+  clearBtn.classList.toggle("show", anyFilterActive());
+
+  // mark selects that carry an active value
+  Object.values(SELECTS).forEach(s => s.classList.toggle("active", !!s.value));
+
+  VGrid.reset();
+  if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: "auto" });
+  VGrid.layout();
+
+  srStatus.textContent = `${n} cards match.`;
+  if (!opts.skipUrl) writeUrl();
 }
 
-function openModal(c) {
+/* ---------- URL state ---------- */
+
+let suppressUrl = false;
+
+function writeUrl() {
+  if (suppressUrl) return;
+  const f = currentFilters();
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.civs.length) p.set("civ", f.civs.join(","));
+  if (f.type) p.set("type", f.type);
+  if (f.rarity) p.set("rarity", f.rarity);
+  if (f.set) p.set("set", f.set);
+  if (f.mana) p.set("cost", f.mana);
+  if (f.kw) p.set("kw", f.kw);
+  if (f.sort !== "name-asc") p.set("sort", f.sort);
+  if (modalCard) p.set("card", modalCard.id);
+  const deckCode = encodeDeck();
+  if (deckCode) p.set("deck", deckCode);
+  const qs = p.toString();
+  const url = qs ? "?" + qs : location.pathname;
+  history.replaceState(null, "", url);
+}
+
+function readUrl() {
+  const p = new URLSearchParams(location.search);
+  suppressUrl = true;
+  searchInput.value = p.get("q") || "";
+  activeCivs = new Set((p.get("civ") || "").split(",").filter(x => CIVS.includes(x)));
+  typeFilter.value = p.get("type") || "";
+  rarityFilter.value = p.get("rarity") || "";
+  setFilter.value = p.get("set") || "";
+  manaFilter.value = p.get("cost") || "";
+  keywordFilter.value = p.get("kw") || "";
+  sortSelect.value = p.get("sort") || "name-asc";
+  syncCivChips();
+  suppressUrl = false;
+  return { card: p.get("card"), deck: p.get("deck") };
+}
+
+/* ---------- Deck: encode / decode ----------
+   Compact code: id*qty joined by dots, plus the name. Small enough for a URL. */
+
+function encodeDeck() {
+  if (!DECK.size) return "";
+  const body = deckOrder
+    .filter(id => DECK.get(id))
+    .map(id => { const q = DECK.get(id); return q > 1 ? `${id}*${q}` : id; })
+    .join(".");
+  const name = $("deckName").value.trim();
+  return (name && name !== "Untitled deck" ? encodeURIComponent(name) + "~" : "") + body;
+}
+
+function decodeDeck(code) {
+  if (!code) return;
+  let body = code;
+  const tilde = code.indexOf("~");
+  if (tilde > -1) {
+    try { $("deckName").value = decodeURIComponent(code.slice(0, tilde)); } catch (e) {}
+    body = code.slice(tilde + 1);
+  }
+  const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
+  DECK = new Map(); deckOrder = [];
+  body.split(".").filter(Boolean).forEach(tok => {
+    const [id, q] = tok.split("*");
+    if (!byId.has(id)) return;          // silently drop ids not in this pool
+    const qty = Math.max(1, Math.min(99, parseInt(q || "1", 10) || 1));
+    DECK.set(id, qty);
+    deckOrder.push(id);
+  });
+}
+
+/* ---------- Deck: mutation ---------- */
+
+function deckTotal() {
+  let t = 0; DECK.forEach(v => t += v); return t;
+}
+
+function addToDeck(c, n) {
+  n = n == null ? 1 : n;
+  const cur = DECK.get(c.id) || 0;
+  const next = Math.max(0, Math.min(99, cur + n));
+  if (next === 0) { DECK.delete(c.id); deckOrder = deckOrder.filter(x => x !== c.id); }
+  else {
+    if (!DECK.has(c.id)) deckOrder.push(c.id);
+    DECK.set(c.id, next);
+  }
+  saveDeck();
+  renderDeck();
+  VGrid.refreshCard(c.id);
+  if (modalCard && modalCard.id === c.id) updateModalStepper();
+  return next;
+}
+
+function saveDeck() {
+  try {
+    localStorage.setItem("dm_deck", JSON.stringify({
+      name: $("deckName").value,
+      cards: deckOrder.filter(id => DECK.get(id)).map(id => [id, DECK.get(id)])
+    }));
+  } catch (e) { /* private mode / blocked storage — deck just won't persist */ }
+  writeUrl();
+}
+
+function loadDeck() {
+  try {
+    const raw = localStorage.getItem("dm_deck");
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    if (o.name) $("deckName").value = o.name;
+    const byId = new Set(ALL_CARDS.map(c => c.id));
+    (o.cards || []).forEach(([id, q]) => {
+      if (!byId.has(id)) return;
+      DECK.set(id, q); deckOrder.push(id);
+    });
+  } catch (e) { /* corrupt or unavailable storage — start with an empty deck */ }
+}
+
+/* ---------- Deck: render ---------- */
+
+function renderDeck() {
+  const total = deckTotal();
+  $("deckCount").textContent = total;
+  $("deckCount").classList.toggle("legal", total >= 40);
+  $("spineCount").textContent = total;
+
+  const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
+  const entries = deckOrder.filter(id => DECK.get(id)).map(id => [byId.get(id), DECK.get(id)])
+                           .filter(([c]) => c);
+
+  // civilization balance
+  const civCount = {};
+  entries.forEach(([c, q]) => civsOf(c).forEach(cv => civCount[cv] = (civCount[cv] || 0) + q));
+  const civBar = $("civBar");
+  civBar.innerHTML = CIVS.filter(cv => civCount[cv])
+    .map(cv => `<span style="flex-grow:${civCount[cv]};background:${CIV_COLOR[cv]}"></span>`).join("")
+    || `<span style="flex-grow:1"></span>`;
+
+  // advisory notices — informational, never blocking
+  const notices = [];
+  if (total === 0) notices.push(["", "Add cards from the grid to start a deck."]);
+  else {
+    if (total < 40) notices.push(["", `${40 - total} more to reach the standard 40.`]);
+    else notices.push(["ok", `${total} cards — at or above the standard 40.`]);
+    const over = entries.filter(([, q]) => q > 4);
+    if (over.length) {
+      notices.push(["", `${over.length} card${over.length > 1 ? "s" : ""} above the usual 4-copy limit.`]);
+    }
+    const civs = Object.keys(civCount);
+    if (civs.length > 2) notices.push(["", `${civs.length} civilizations — mana may be inconsistent.`]);
+  }
+  $("deckNotices").innerHTML = notices
+    .map(([cls, t]) => `<div class="notice ${cls}">${escapeHtml(t)}</div>`).join("");
+
+  // mana curve, 1..7+
+  const buckets = new Array(8).fill(0);
+  entries.forEach(([c, q]) => {
+    const m = c.mana_cost;
+    if (m == null) return;
+    buckets[Math.min(7, Math.max(1, m)) - 1] += q;
+  });
+  const max = Math.max(1, ...buckets);
+  $("curve").innerHTML = buckets.map((v, i) =>
+    `<div class="curveCol ${v ? "has" : ""}" title="${v} card${v === 1 ? "" : "s"} at cost ${i === 7 ? "7+" : i + 1}">
+       <div class="curveBar" style="height:${Math.round(v / max * 100)}%"></div>
+       <div class="curveLabel">${i === 7 ? "7+" : i + 1}</div>
+     </div>`).join("");
+
+  // grouped list
+  const list = $("deckList");
+  if (!entries.length) {
+    list.innerHTML = `<div class="deckEmpty">Your deck is empty.<br>Open any card and press <b>+</b>, or hover a card in the grid.</div>`;
+    return;
+  }
+  const groups = { Creature: [], "Evolution Creature": [], Spell: [] };
+  entries.forEach(e => { (groups[e[0].type] || (groups[e[0].type] = [])).push(e); });
+  list.innerHTML = Object.entries(groups).filter(([, v]) => v.length).map(([type, arr]) => {
+    const sub = arr.reduce((s, [, q]) => s + q, 0);
+    arr.sort((a, b) => (a[0].mana_cost ?? 99) - (b[0].mana_cost ?? 99)
+                     || (a[0].name || "").localeCompare(b[0].name || ""));
+    return `<div class="deckGroup">
+      <div class="deckGroupLabel"><span>${escapeHtml(type)}</span><span>${sub}</span></div>
+      ${arr.map(([c, q]) => `
+        <div class="deckRow ${q > 4 ? "over" : ""}" data-id="${escapeHtml(c.id)}">
+          <span class="rowQty">${q}×</span>
+          ${civDotHtml(c)}
+          <span class="rowName">${escapeHtml(c.name)}</span>
+          <span class="rowCost">${c.mana_cost != null ? c.mana_cost : "–"}</span>
+          <button class="rowDel" aria-label="Remove one ${escapeHtml(c.name)}">−</button>
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+/* ---------- Modal ---------- */
+
+function highlight(text, q) {
+  const safe = escapeHtml(text);
+  if (!q) return safe;
+  const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+  return safe.replace(re, "<mark>$1</mark>");
+}
+
+function field(label, value, cls) {
+  const empty = value === null || value === undefined || value === "";
+  const q = searchInput.value.trim();
+  const body = empty
+    ? '<span class="missing">Not recorded in the source data</span>'
+    : highlight(value, q);
+  return `<div class="field"><div class="label">${label}</div><div class="value ${cls || ""}">${body}</div></div>`;
+}
+
+let modalOpenTimer = null;
+
+function openModal(c, opts) {
+  opts = opts || {};
+  modalCard = c;
   const src = imgSrc(c);
-  const tags = [c.civilization, c.civilization2, c.type, c.race, c.is_evolution ? 'Evolution' : null]
-    .filter(Boolean).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+  const cv = civsOf(c);
+  const qty = DECK.get(c.id) || 0;
+
+  const tags = [
+    ...cv.map(x => `<span class="tag civTag" style="--tagColor:${CIV_COLOR[x]}">${escapeHtml(x)}</span>`),
+    c.type ? `<span class="tag">${escapeHtml(c.type)}</span>` : "",
+    c.race ? `<span class="tag">${escapeHtml(c.race)}</span>` : "",
+    c.rarity ? `<span class="tag">${escapeHtml(c.rarity)}</span>` : "",
+    ...(c._kw || []).slice(0, 4).map(k => `<span class="tag">${escapeHtml(k)}</span>`)
+  ].filter(Boolean).join("");
 
   modalBody.innerHTML = `
     <div class="modalImg">
-      ${src ? `<img src="${src}" alt="${escapeHtml(c.name)}" onerror="this.style.display='none'">` : `<div class="noimg">No image available</div>`}
+      ${src
+        ? `<img src="${escapeHtml(src)}" alt="Card scan of ${escapeHtml(c.name)}" onerror="this.style.display='none'">`
+        : `<div class="noimg">No image available</div>`}
     </div>
     <div class="modalInfo">
-      <h2>${escapeHtml(c.name)}</h2>
+      <h2 id="modalTitle">${escapeHtml(c.name)}</h2>
+      <div class="setline">${escapeHtml(c.set || "")}${c.set_number ? " · #" + escapeHtml(c.set_number) : ""}</div>
       <div class="tagRow">${tags}</div>
-      ${field('Set', `${c.set || ''} ${c.set_number ? '#' + c.set_number : ''}`.trim())}
-      ${field('Mana cost', c.mana_cost)}
-      ${field('Power', c.power)}
-      ${field('Rarity', c.rarity)}
-      ${field('Rules text', c.rules_text)}
-      ${field('Kaggle abilities (raw)', c.abilities)}
-      ${field('Flavor text', c.flavor_text, {cls: 'flavor'})}
-      ${field('Illustrator', c.illustrator)}
-      ${field('Image source', c.image_source)}
-    </div>
-  `;
-  overlay.classList.add('open');
+      <div class="statRow">
+        <div class="stat">
+          <div class="label">Mana cost</div>
+          <span class="statNum ${c.mana_cost == null ? "na" : ""}">${c.mana_cost != null ? c.mana_cost : "—"}</span>
+        </div>
+        <div class="stat">
+          <div class="label">Power</div>
+          <span class="statNum ${!c.power ? "na" : ""}">${c.power ? escapeHtml(c.power) : "—"}</span>
+        </div>
+        <div class="stat">
+          <div class="label">In deck</div>
+          <span class="statNum ${!qty ? "na" : ""}" id="inDeckNum">${qty || "—"}</span>
+        </div>
+      </div>
+      ${field("Rules text", c.rules_text)}
+      ${field("Flavor text", c.flavor_text, "flavor")}
+      ${field("Illustrator", c.illustrator)}
+      <div class="modalActions">
+        <div class="qtyStepper">
+          <button class="iconBtn" id="mMinus" aria-label="Remove one copy">−</button>
+          <span class="n" id="mQty">${qty}</span>
+          <button class="iconBtn" id="mPlus" aria-label="Add one copy">+</button>
+        </div>
+        <button class="btn" id="mAdd4">Add 4</button>
+      </div>
+    </div>`;
+
+  $("mPlus").addEventListener("click", () => addToDeck(c, 1));
+  $("mMinus").addEventListener("click", () => addToDeck(c, -1));
+  $("mAdd4").addEventListener("click", () => {
+    addToDeck(c, 4 - (DECK.get(c.id) || 0) > 0 ? 4 - (DECK.get(c.id) || 0) : 0);
+    toast(`${c.name} — 4 copies`);
+  });
+
+  const i = RESULTS.findIndex(x => x.id === c.id);
+  $("prevBtn").disabled = i <= 0;
+  $("nextBtn").disabled = i < 0 || i >= RESULTS.length - 1;
+
+  overlay.classList.add("mounted");
+  clearTimeout(modalOpenTimer);
+  // one frame so the browser registers the start state before transitioning
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add("open")));
+  if (!opts.silent) $("closeModalBtn").focus({ preventScroll: true });
+  writeUrl();
 }
 
-closeModalBtn.addEventListener('click', () => overlay.classList.remove('open'));
-overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') overlay.classList.remove('open'); });
+function closeModal() {
+  if (!overlay.classList.contains("mounted")) return;
+  const id = modalCard && modalCard.id;
+  overlay.classList.remove("open");
+  modalCard = null;
+  clearTimeout(modalOpenTimer);
+  const wait = reduceMotion.matches ? 0 : 120;
+  modalOpenTimer = setTimeout(() => overlay.classList.remove("mounted"), wait);
+  writeUrl();
+  // return focus to the card the modal came from
+  if (id) {
+    const el = grid.querySelector(`.card[data-id="${CSS.escape(id)}"]`);
+    if (el) el.focus({ preventScroll: true });
+  }
+}
 
-searchInput.addEventListener('input', debounce(render, 150));
-[civFilter, typeFilter, rarityFilter, setFilter, manaFilter, sortSelect].forEach(el => el.addEventListener('change', render));
-clearBtn.addEventListener('click', () => {
-  searchInput.value = '';
-  civFilter.value = '';
-  typeFilter.value = '';
-  rarityFilter.value = '';
-  setFilter.value = '';
-  manaFilter.value = '';
-  sortSelect.value = 'name-asc';
+function stepModal(delta) {
+  if (!modalCard) return;
+  const i = RESULTS.findIndex(x => x.id === modalCard.id);
+  const j = i + delta;
+  if (j < 0 || j >= RESULTS.length) return;
+  VGrid.scrollToIndex(j);
+  openModal(RESULTS[j], { silent: true });
+}
+
+function updateModalStepper() {
+  const q = DECK.get(modalCard.id) || 0;
+  const qEl = $("mQty"), nEl = $("inDeckNum");
+  if (qEl) qEl.textContent = q;
+  if (nEl) { nEl.textContent = q || "—"; nEl.classList.toggle("na", !q); }
+}
+
+/* ---------- Deck drawer open/close ---------- */
+
+function setDeckOpen(open) {
+  document.body.classList.toggle("deckOpen", open);
+  $("deckDrawer").setAttribute("aria-hidden", String(!open));
+  // the grid width changes, so the virtualizer must re-measure
+  requestAnimationFrame(() => setTimeout(() => VGrid.layout(), 160));
+}
+
+/* ---------- Keyboard ---------- */
+
+function focusedCardIndex() {
+  const el = document.activeElement;
+  if (el && el.classList && el.classList.contains("card")) return parseInt(el.dataset.index, 10);
+  return -1;
+}
+
+function focusCardAt(i) {
+  if (i < 0 || i >= RESULTS.length) return;
+  VGrid.scrollToIndex(i);
+  VGrid.update(true);
+  const el = grid.querySelector(`.card[data-index="${i}"]`);
+  if (el) el.focus({ preventScroll: true });
+}
+
+document.addEventListener("keydown", (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+
+  if (e.key === "Escape") {
+    if (overlay.classList.contains("mounted")) { closeModal(); return; }
+    if (typing && e.target === searchInput) { searchInput.blur(); return; }
+    if (document.body.classList.contains("deckOpen")) { setDeckOpen(false); return; }
+  }
+
+  if (overlay.classList.contains("mounted")) {
+    if (e.key === "ArrowLeft") { e.preventDefault(); stepModal(-1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); stepModal(1); }
+    if (!typing && (e.key === "+" || e.key === "=")) { e.preventDefault(); addToDeck(modalCard, 1); }
+    if (!typing && (e.key === "-" || e.key === "_")) { e.preventDefault(); addToDeck(modalCard, -1); }
+    return;
+  }
+
+  if (typing) return;
+
+  if (e.key === "/") { e.preventDefault(); searchInput.focus(); searchInput.select(); return; }
+  if (e.key === "d" || e.key === "D") {
+    e.preventDefault();
+    setDeckOpen(!document.body.classList.contains("deckOpen"));
+    return;
+  }
+
+  const i = focusedCardIndex();
+  if (i < 0) {
+    if (["ArrowDown", "ArrowRight"].includes(e.key)) { e.preventDefault(); focusCardAt(0); }
+    return;
+  }
+  const c = VGrid.cols;
+  let target = null;
+  if (e.key === "ArrowRight") target = i + 1;
+  else if (e.key === "ArrowLeft") target = i - 1;
+  else if (e.key === "ArrowDown") target = i + c;
+  else if (e.key === "ArrowUp") target = i - c;
+  else if (e.key === "Home") target = 0;
+  else if (e.key === "End") target = RESULTS.length - 1;
+  else if (e.key === "+" || e.key === "=") { e.preventDefault(); addToDeck(RESULTS[i], 1); return; }
+  else if (e.key === "-" || e.key === "_") { e.preventDefault(); addToDeck(RESULTS[i], -1); return; }
+  if (target != null) { e.preventDefault(); focusCardAt(target); }
+});
+
+/* ---------- Wiring ---------- */
+
+const debouncedRender = debounce(() => render(), 120);
+searchInput.addEventListener("input", debouncedRender);
+
+[typeFilter, rarityFilter, setFilter, manaFilter, keywordFilter, sortSelect]
+  .forEach(el => el.addEventListener("change", () => render()));
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  activeCivs.clear();
+  syncCivChips();
+  [typeFilter, rarityFilter, setFilter, manaFilter, keywordFilter].forEach(s => s.value = "");
+  sortSelect.value = "name-asc";
   render();
 });
 
+$("closeModalBtn").addEventListener("click", closeModal);
+$("prevBtn").addEventListener("click", () => stepModal(-1));
+$("nextBtn").addEventListener("click", () => stepModal(1));
+overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+
+$("deckSpine").addEventListener("click", () => setDeckOpen(true));
+$("deckCloseBtn").addEventListener("click", () => setDeckOpen(false));
+$("deckName").addEventListener("input", debounce(saveDeck, 250));
+
+$("deckList").addEventListener("click", (e) => {
+  const row = e.target.closest(".deckRow");
+  if (!row) return;
+  const card = ALL_CARDS.find(c => c.id === row.dataset.id);
+  if (!card) return;
+  if (e.target.closest(".rowDel")) {
+    e.stopPropagation();
+    if ((DECK.get(card.id) || 0) <= 1) {
+      row.classList.add("leaving");
+      setTimeout(() => addToDeck(card, -1), reduceMotion.matches ? 0 : 110);
+    } else addToDeck(card, -1);
+  } else {
+    openModal(card);
+  }
+});
+
+$("emptyDeckBtn").addEventListener("click", () => {
+  if (!DECK.size) return;
+  if (!confirm(`Remove all ${deckTotal()} cards from "${$("deckName").value}"?`)) return;
+  DECK.clear(); deckOrder = [];
+  saveDeck(); renderDeck();
+  VGrid.layout();
+  toast("Deck emptied");
+});
+
+$("shareBtn").addEventListener("click", async () => {
+  writeUrl();
+  const url = location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Share link copied");
+  } catch (e) {
+    prompt("Copy this link:", url);
+  }
+});
+
+$("exportBtn").addEventListener("click", async () => {
+  const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
+  const lines = deckOrder.filter(id => DECK.get(id))
+    .map(id => `${DECK.get(id)}x ${byId.get(id) ? byId.get(id).name : id}`);
+  const text = `# ${$("deckName").value} (${deckTotal()} cards)\n` +
+               lines.join("\n") + `\n\n# code: ${encodeDeck()}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Deck list copied");
+  } catch (e) {
+    prompt("Copy your deck list:", text);
+  }
+});
+
+$("importBtn").addEventListener("click", () => {
+  const code = prompt("Paste a deck code (the '# code:' line from an export, or a share link):");
+  if (!code) return;
+  let raw = code.trim();
+  const m = raw.match(/[?&]deck=([^&\s]+)/);
+  if (m) raw = decodeURIComponent(m[1]);
+  const before = deckTotal();
+  decodeDeck(raw);
+  if (!DECK.size && before) { toast("Nothing recognized in that code"); return; }
+  saveDeck(); renderDeck(); VGrid.layout(); setDeckOpen(true);
+  toast(`Imported ${deckTotal()} cards`);
+});
+
+/* ---------- Civ chips ---------- */
+
+function syncCivChips() {
+  [...civChips.children].forEach(btn => {
+    btn.setAttribute("aria-pressed", String(activeCivs.has(btn.dataset.civ)));
+  });
+}
+
+function buildCivChips() {
+  civChips.innerHTML = CIVS.map(cv =>
+    `<button class="civChip civ-${cv}" data-civ="${cv}" aria-pressed="false">
+       <span class="civ-dot civ-${cv}"></span><span class="civLabel">${cv}</span>
+     </button>`).join("");
+  civChips.addEventListener("click", (e) => {
+    const btn = e.target.closest(".civChip");
+    if (!btn) return;
+    const cv = btn.dataset.civ;
+    if (activeCivs.has(cv)) activeCivs.delete(cv);
+    else activeCivs.add(cv);
+    syncCivChips();
+    btn.classList.remove("justPressed");
+    void btn.offsetWidth;              // restart the tick animation
+    btn.classList.add("justPressed");
+    render();
+  });
+}
+
+/* ---------- Scroll / resize ---------- */
+
+let ticking = false;
+window.addEventListener("scroll", () => {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => { VGrid.update(false); ticking = false; });
+}, { passive: true });
+
+window.addEventListener("resize", debounce(() => {
+  const scrolled = window.scrollY;
+  VGrid.reset();
+  VGrid.layout();
+  window.scrollTo({ top: scrolled, behavior: "auto" });
+}, 120));
+
+/* ---------- Populate ---------- */
+
+function populateSelect(sel, values) {
+  const frag = document.createDocumentFragment();
+  values.forEach(v => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = v;
+    frag.appendChild(o);
+  });
+  sel.appendChild(frag);
+}
+
 async function init() {
+  buildCivChips();
   try {
     const [cardsRes, facetsRes] = await Promise.all([
-      fetch('data/cards.json'),
-      fetch('data/facets.json')
+      fetch("data/cards.json"),
+      fetch("data/facets.json")
     ]);
+    if (!cardsRes.ok || !facetsRes.ok) throw new Error("data files not found");
     ALL_CARDS = await cardsRes.json();
     FACETS = await facetsRes.json();
+    indexCards();
 
-    populateSelect(civFilter, FACETS.civilizations);
-    populateSelect(typeFilter, FACETS.types);
-    populateSelect(rarityFilter, FACETS.rarities);
-    populateSelect(setFilter, FACETS.sets);
+    populateSelect(typeFilter, FACETS.types || []);
+    populateSelect(rarityFilter, FACETS.rarities || []);
+    populateSelect(setFilter, FACETS.sets || []);
+    const costs = [...new Set(ALL_CARDS.map(c => c.mana_cost).filter(v => v != null))]
+      .sort((a, b) => a - b);
+    populateSelect(manaFilter, costs.map(String));
+    const kwPresent = KEYWORDS.map(([n]) => n)
+      .filter(n => ALL_CARDS.some(c => c._kw.includes(n)));
+    populateSelect(keywordFilter, kwPresent);
 
-    const manaCosts = [...new Set(ALL_CARDS.map(c => c.mana_cost).filter(v => v != null))].sort((a,b) => a-b);
-    populateSelect(manaFilter, manaCosts.map(String));
+    const fromUrl = readUrl();
+    if (fromUrl.deck) decodeDeck(fromUrl.deck);
+    else loadDeck();
 
-    render();
+    $("loading").classList.add("hide");
+    renderDeck();
+    render({ skipUrl: true, keepScroll: true });
+    writeUrl();
+
+    if (DECK.size) setDeckOpen(true);
+    if (fromUrl.card) {
+      const c = ALL_CARDS.find(x => x.id === fromUrl.card);
+      if (c) openModal(c, { silent: true });
+    }
+    if (!fromUrl.card && !("ontouchstart" in window)) searchInput.focus({ preventScroll: true });
   } catch (err) {
-    resultCount.textContent = 'failed to load data';
-    grid.innerHTML = `<div style="color:var(--text-dim);padding:40px;">Could not load card data: ${escapeHtml(err.message)}. If you opened this file directly (file://), run a local server instead (see README) since browsers block fetch() on local files.</div>`;
+    $("loading").innerHTML =
+      `<div style="max-width:52ch;margin:0 auto;line-height:1.6">
+         <strong style="color:var(--text)">Could not load the card data.</strong><br>
+         ${escapeHtml(err.message)}. If you opened this file directly from disk
+         (a <code>file://</code> address), run a small local web server instead —
+         browsers block data files loaded that way. See the README for one command.
+       </div>`;
+    resultCount.textContent = "load failed";
   }
 }
 
