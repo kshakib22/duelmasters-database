@@ -92,6 +92,7 @@
     backdrop-filter: blur(14px) saturate(140%);
     border-bottom: 1px solid var(--border);
     padding: 12px 20px 11px;
+    transition: padding-right var(--t-med) var(--ease-out);
   }
   .railTop {
     display: flex;
@@ -333,13 +334,17 @@
   .aChip svg { width: 10px; height: 10px; opacity: .75; }
 
   /* ---------- Filter drawer ---------- */
+  /* Desktop: no scrim — the grid stays live and legible beside the drawer.
+     The scrim only returns on narrow screens, where the drawer covers the page. */
   #filterScrim {
     position: fixed; inset: 0; z-index: 70;
     background: rgba(4,6,12,.55);
     opacity: 0; pointer-events: none;
     transition: opacity var(--t-fast) var(--ease-out);
   }
-  #filterScrim.show { opacity: 1; pointer-events: auto; }
+  @media (max-width: 900px) {
+    #filterScrim.show { opacity: 1; pointer-events: auto; }
+  }
   #filterPanel {
     position: fixed; z-index: 80; top: 0; right: 0; bottom: 0;
     width: min(370px, 92vw);
@@ -357,7 +362,24 @@
     border-bottom: 1px solid var(--border);
   }
   .fpTitle { font-family: var(--display); font-size: 15px; font-weight: 800; }
-  .fpCount { font-size: 11.5px; color: var(--text-faint); margin-right: auto; }
+  .fpTitle { margin-right: auto; }
+  /* Live result readout — proof that filtering is instant, not deferred. */
+  .fpLive {
+    display: flex; align-items: baseline; gap: 7px;
+    padding: 10px 16px 11px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev-2);
+  }
+  .fpLiveN {
+    font-family: var(--display); font-size: 19px; font-weight: 800;
+    color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .fpLiveN.tick { animation: fpTick 260ms var(--ease-out); }
+  @keyframes fpTick {
+    0%   { transform: translateY(-2px) scale(1.06); opacity: .6; }
+    100% { transform: none; opacity: 1; }
+  }
+  .fpLiveK { font-size: 11px; color: var(--text-faint); }
   .fpClose {
     background: none; border: none; color: var(--text-dim);
     cursor: pointer; padding: 5px; border-radius: 6px; display: grid; place-items: center;
@@ -381,10 +403,14 @@
     border-radius: 4px; padding: 1px 4px; font-size: 10.5px;
     color: var(--text-dim);
   }
-  /* In the drawer the multi-select buttons should fill the column. */
+  /* In the drawer the multi-select buttons fill the column; inline in the rail
+     they size to their content. */
   #filterPanel .msWrap { display: block; }
   #filterPanel .msBtn { width: 100%; max-width: none; }
   #filterPanel .msPanel { width: 100%; }
+  /* The inline popovers are the only ones that can be clipped by the header's
+     own stacking/overflow, so they need to sit above it. */
+  .railBottom .msPanel { z-index: 65; }
 
   .segRow { display: flex; gap: 0; margin-top: 7px; }
   .seg {
@@ -527,9 +553,16 @@
   /* ---------- Binder grid ---------- */
   main {
     padding: 18px 20px 0;
+    transition: padding-right var(--t-med) var(--ease-out);
   }
   body.deckOpen main { padding-right: 340px; }
   body.deckOpen header { padding-right: 356px; }
+  /* The filter drawer shrinks the grid rather than covering it, so results are
+     visibly re-filtering while you tick boxes. Both open at once = both insets. */
+  body.filtersOpen main { padding-right: 386px; }
+  body.filtersOpen header { padding-right: 402px; }
+  body.filtersOpen.deckOpen main { padding-right: 726px; }
+  body.filtersOpen.deckOpen header { padding-right: 742px; }
 
   #emptyState {
     text-align: center;
@@ -1214,9 +1247,29 @@
   }
 
   /* ---------- Responsive ---------- */
+  /* Below 900px the filter drawer overlays instead of insetting — there isn't
+     enough width left to render a useful grid beside it. These must restate the
+     base padding (not 20px) so opening the drawer never nudges the grid sideways;
+     the 720px block below narrows both again to 12px. */
+  @media (max-width: 900px) {
+    body.filtersOpen main,
+    body.filtersOpen.deckOpen main { padding-right: 20px; }
+    body.filtersOpen header,
+    body.filtersOpen.deckOpen header { padding-right: 20px; }
+  }
+  @media (max-width: 720px) {
+    body.filtersOpen main,
+    body.filtersOpen.deckOpen main { padding-right: 12px; }
+    body.filtersOpen header,
+    body.filtersOpen.deckOpen header { padding-right: 12px; }
+  }
   @media (max-width: 1100px) {
     body.deckOpen main { padding-right: 20px; }
     body.deckOpen header { padding-right: 20px; }
+    /* Both drawers open on a mid-size screen would leave no grid; the filter
+       drawer keeps its inset, the deck drawer yields. */
+    body.filtersOpen.deckOpen main { padding-right: 386px; }
+    body.filtersOpen.deckOpen header { padding-right: 402px; }
     #deckDrawer { box-shadow: -16px 0 40px -12px rgba(0,0,0,0.7); }
   }
   @media (max-width: 720px) {
@@ -1278,12 +1331,17 @@
   </div>
   <div class="railBottom">
     <div class="civChips" id="civChips" role="group" aria-label="Filter by civilization"></div>
-    <button class="btn primary" id="filtersBtn" aria-expanded="false" aria-controls="filterPanel">
+    <!-- The three filters reached for most often stay inline; everything else
+         (rarity, set, ability, power, match modes) lives in the drawer. -->
+    <div class="msWrap" id="ms-type"></div>
+    <div class="msWrap" id="ms-race"></div>
+    <div class="msWrap" id="ms-cost"></div>
+    <button class="btn" id="filtersBtn" aria-expanded="false" aria-controls="filterPanel">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"
            stroke-linecap="round" aria-hidden="true">
         <path d="M2 4h12M4.5 8h7M6.5 12h3"/>
       </svg>
-      Filters<span class="btnN" id="filtersN" hidden>0</span>
+      More<span class="btnN" id="filtersN" hidden>0</span>
     </button>
     <div class="sortWrap">
       <label for="sortSelect">Sort</label>
@@ -1303,28 +1361,26 @@
   <div class="activeChips" id="activeChips" aria-live="polite"></div>
 </header>
 
-<!-- Slide-out filter drawer. Keeps the header to search + civ + sort, per user
-     feedback that the rail was cluttered and sort was indistinguishable from filters. -->
+<!-- Slide-out drawer for the less-common filters. Type / creature type / cost stay
+     inline in the rail. Everything here applies LIVE — there is no apply step; the
+     live count in the header is what confirms it. -->
 <div id="filterScrim"></div>
-<aside id="filterPanel" aria-label="Filters" aria-hidden="true">
+<aside id="filterPanel" aria-label="More filters" aria-hidden="true">
   <div class="fpHead">
-    <span class="fpTitle">Filters</span>
-    <span class="fpCount" id="fpCount"></span>
+    <span class="fpTitle">More filters</span>
     <button class="fpClose" id="fpClose" aria-label="Close filters">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
         <path d="M4 4l8 8M12 4l-8 8"/>
       </svg>
     </button>
   </div>
+  <!-- Live result readout. Sits directly under the title so a change made deep in
+       the panel is still visibly reflected without scrolling or closing. -->
+  <div class="fpLive">
+    <span class="fpLiveN" id="fpCount">1,010</span>
+    <span class="fpLiveK">cards match — updating as you filter</span>
+  </div>
   <div class="fpBody">
-    <div class="fpGroup">
-      <div class="fpLabel">Card type</div>
-      <div class="msWrap" id="ms-type"></div>
-    </div>
-    <div class="fpGroup">
-      <div class="fpLabel">Creature type <span class="fpHint">race / family</span></div>
-      <div class="msWrap" id="ms-race"></div>
-    </div>
     <div class="fpGroup">
       <div class="fpLabel">Keyword ability</div>
       <div class="msWrap" id="ms-kw"></div>
@@ -1334,20 +1390,16 @@
       </div>
     </div>
     <div class="fpGroup">
+      <div class="fpLabel">Power</div>
+      <div class="msWrap" id="ms-power"></div>
+    </div>
+    <div class="fpGroup">
       <div class="fpLabel">Civilization match</div>
       <div class="segRow" role="group" aria-label="Civilization match mode">
         <button class="seg on" data-civmode="any">Any of</button>
         <button class="seg" data-civmode="only">Only these</button>
       </div>
       <div class="fpHint block">“Only these” hides cards that also use a civilization you didn’t pick — the real test for a deck’s colour identity.</div>
-    </div>
-    <div class="fpGroup">
-      <div class="fpLabel">Mana cost</div>
-      <div class="msWrap" id="ms-cost"></div>
-    </div>
-    <div class="fpGroup">
-      <div class="fpLabel">Power</div>
-      <div class="msWrap" id="ms-power"></div>
     </div>
     <div class="fpGroup">
       <div class="fpLabel">Rarity</div>
@@ -1369,7 +1421,7 @@
   </div>
   <div class="fpFoot">
     <button class="btn" id="fpClear">Clear all</button>
-    <button class="btn primary" id="fpApply">Show <span id="fpApplyN">0</span></button>
+    <button class="btn primary" id="fpApply">Done</button>
   </div>
 </aside>
 
@@ -1978,8 +2030,15 @@ function render(opts) {
   const fN = $("filtersN");
   fN.hidden = activeN === 0;
   fN.textContent = activeN;
-  $("fpCount").textContent = `${n.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()} cards`;
-  $("fpApplyN").textContent = n.toLocaleString();
+  // Live readout in the drawer — flashes so a change made while the drawer is
+  // open is visibly acknowledged even though the grid behind it is covered.
+  const fpc = $("fpCount");
+  if (fpc.textContent !== n.toLocaleString()) {
+    fpc.textContent = n.toLocaleString();
+    fpc.classList.remove("tick");
+    void fpc.offsetWidth;
+    fpc.classList.add("tick");
+  }
 
   VGrid.reset();
   if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: "auto" });
@@ -2485,6 +2544,11 @@ function setFiltersOpen(open) {
   $("filterPanel").setAttribute("aria-hidden", String(!open));
   $("filterScrim").classList.toggle("show", open);
   $("filtersBtn").setAttribute("aria-expanded", String(open));
+  // Insets the grid instead of covering it (desktop), so results visibly
+  // re-filter while the drawer is open. The virtualizer must re-measure since
+  // the available width — and therefore the column count — just changed.
+  document.body.classList.toggle("filtersOpen", open);
+  requestAnimationFrame(() => setTimeout(() => VGrid.layout(), 160));
   if (open) $("fpClose").focus();
 }
 $("filtersBtn").addEventListener("click", () =>
