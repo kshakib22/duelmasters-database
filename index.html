@@ -153,9 +153,12 @@
   input[type="text"] { width: 100%; }
   input[type="text"]::placeholder { color: var(--text-faint); }
   input[type="text"]:hover, select:hover { border-color: var(--border-strong); }
+  /* Only ever set background-COLOR here. The `background` shorthand resets
+     background-image, which wipes the chevron on <select> and made the arrow
+     flicker/double up against the .active rule below. */
   input[type="text"]:focus-visible, select:focus-visible {
     border-color: var(--accent);
-    background: var(--bg-elev-2);
+    background-color: var(--bg-elev-2);
   }
   select {
     font-family: var(--display);
@@ -183,6 +186,222 @@
     background-color: var(--accent-dim);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f9dff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
   }
+
+  /* ---------- Multi-select filter dropdowns ----------
+     A <select multiple> can't do checkboxes, live counts or a type-ahead, and on
+     a 63-item race list a plain select is unusable. These are button + popover
+     pairs that behave like one control. */
+  .msWrap { position: relative; }
+  .msBtn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background-color: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 11px;
+    border-radius: 7px;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 230px;
+    transition: border-color var(--t-instant) var(--ease-out),
+                background-color var(--t-instant) var(--ease-out);
+  }
+  .msBtn:hover { border-color: var(--border-strong); }
+  .msBtn:focus-visible { border-color: var(--accent); background-color: var(--bg-elev-2); outline: none; }
+  .msBtn .msLabel { overflow: hidden; text-overflow: ellipsis; }
+  .msBtn .msChev {
+    flex: none; width: 11px; height: 11px; margin-left: auto;
+    transition: transform var(--t-instant) var(--ease-out);
+  }
+  .msWrap.open .msBtn .msChev { transform: rotate(180deg); }
+  .msWrap.open .msBtn { border-color: var(--accent); background-color: var(--bg-elev-2); }
+  .msBtn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: var(--accent-dim);
+  }
+  .msBtn .msN {
+    flex: none;
+    background: var(--accent); color: #0b0d14;
+    font-size: 10px; font-weight: 800;
+    padding: 1px 5px; border-radius: 999px;
+  }
+
+  .msPanel {
+    position: absolute; z-index: 60; top: calc(100% + 6px); left: 0;
+    width: 252px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55);
+    padding: 8px;
+    display: none;
+  }
+  .msWrap.open .msPanel { display: block; animation: msIn 130ms var(--ease-out); }
+  @keyframes msIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  /* A panel opening near the right edge would otherwise overflow the viewport. */
+  .msPanel.alignRight { left: auto; right: 0; }
+  .msSearch {
+    width: 100%; margin-bottom: 6px;
+    padding: 6px 9px; font-size: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); outline: none;
+    font-family: var(--body);
+  }
+  .msSearch:focus-visible { border-color: var(--accent); }
+  .msList { max-height: 260px; overflow-y: auto; margin: 0 -2px; }
+  .msOpt {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+    font-size: 12.5px; cursor: pointer;
+    color: var(--text-dim);
+    user-select: none;
+  }
+  .msOpt:hover { background: var(--bg-elev); color: var(--text); }
+  .msOpt .box {
+    flex: none; width: 14px; height: 14px; border-radius: 4px;
+    border: 1.5px solid var(--border-strong);
+    display: grid; place-items: center;
+    transition: background-color var(--t-instant), border-color var(--t-instant);
+  }
+  .msOpt .box svg { width: 10px; height: 10px; opacity: 0; transform: scale(.6);
+                    transition: opacity var(--t-instant), transform var(--t-instant); }
+  .msOpt[aria-checked="true"] { color: var(--text); }
+  .msOpt[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+  .msOpt[aria-checked="true"] .box svg { opacity: 1; transform: none; }
+  .msOpt .msOptName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msOpt .msOptN { flex: none; font-size: 10.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .msOpt.zero { opacity: .42; }
+  .msFoot {
+    display: flex; gap: 6px; padding-top: 7px; margin-top: 5px;
+    border-top: 1px solid var(--border);
+  }
+  .msFoot button {
+    flex: 1; background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--text-dim); font-size: 11px; font-weight: 600;
+    font-family: var(--display);
+    padding: 5px; border-radius: 6px; cursor: pointer;
+  }
+  .msFoot button:hover { color: var(--text); border-color: var(--border-strong); }
+  .msNone { padding: 10px 8px; font-size: 12px; color: var(--text-faint); text-align: center; }
+
+  /* Numeric range popovers (cost / power) reuse the panel chrome. */
+  .rangeRow { display: flex; align-items: center; gap: 7px; padding: 2px 2px 6px; }
+  .rangeRow input {
+    width: 100%; padding: 6px 8px; font-size: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); outline: none;
+    font-family: var(--body);
+  }
+  .rangeRow input:focus-visible { border-color: var(--accent); }
+  .rangeRow span { color: var(--text-faint); font-size: 11px; flex: none; }
+  .rangeHint { font-size: 10.5px; color: var(--text-faint); padding: 0 2px 4px; line-height: 1.4; }
+
+  /* Sort is not a filter. Giving it a visible label and its own group stops it
+     reading as "just another dropdown" in a row of filters. */
+  .sortWrap { display: inline-flex; align-items: center; gap: 6px; }
+  .sortWrap label {
+    font-family: var(--display); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-faint);
+  }
+
+  #filtersBtn { display: inline-flex; align-items: center; gap: 7px; }
+  #filtersBtn svg { width: 14px; height: 14px; }
+  .btnN {
+    background: rgba(0,0,0,.28); color: inherit;
+    font-size: 10px; font-weight: 800;
+    padding: 1px 6px; border-radius: 999px;
+  }
+
+  /* Active-filter summary chips: the answer to "what am I even filtered by?" */
+  .activeChips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .activeChips:empty { display: none; }
+  .aChip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--accent-dim);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+    color: var(--accent);
+    font-family: var(--display); font-size: 11px; font-weight: 600;
+    padding: 3px 5px 3px 8px; border-radius: 999px;
+    cursor: pointer;
+  }
+  .aChip:hover { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+  .aChip b { font-weight: 800; }
+  .aChip svg { width: 10px; height: 10px; opacity: .75; }
+
+  /* ---------- Filter drawer ---------- */
+  #filterScrim {
+    position: fixed; inset: 0; z-index: 70;
+    background: rgba(4,6,12,.55);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--t-fast) var(--ease-out);
+  }
+  #filterScrim.show { opacity: 1; pointer-events: auto; }
+  #filterPanel {
+    position: fixed; z-index: 80; top: 0; right: 0; bottom: 0;
+    width: min(370px, 92vw);
+    background: var(--bg-elev);
+    border-left: 1px solid var(--border-strong);
+    box-shadow: -18px 0 50px rgba(0,0,0,.5);
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform var(--t-med) var(--ease-out);
+  }
+  #filterPanel.open { transform: none; }
+  .fpHead {
+    display: flex; align-items: center; gap: 9px;
+    padding: 15px 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fpTitle { font-family: var(--display); font-size: 15px; font-weight: 800; }
+  .fpCount { font-size: 11.5px; color: var(--text-faint); margin-right: auto; }
+  .fpClose {
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; padding: 5px; border-radius: 6px; display: grid; place-items: center;
+  }
+  .fpClose:hover { color: var(--text); background: var(--bg-elev-2); }
+  .fpClose svg { width: 15px; height: 15px; }
+  .fpBody { flex: 1; overflow-y: auto; padding: 14px 16px 18px; }
+  .fpGroup { margin-bottom: 17px; }
+  .fpLabel {
+    font-family: var(--display); font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-dim); margin-bottom: 7px;
+  }
+  .fpHint { color: var(--text-faint); font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .fpHint.block {
+    display: block; font-size: 11px; line-height: 1.55;
+    margin-top: 6px; font-family: var(--body);
+  }
+  .fpHint code {
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 4px; font-size: 10.5px;
+    color: var(--text-dim);
+  }
+  /* In the drawer the multi-select buttons should fill the column. */
+  #filterPanel .msWrap { display: block; }
+  #filterPanel .msBtn { width: 100%; max-width: none; }
+  #filterPanel .msPanel { width: 100%; }
+
+  .segRow { display: flex; gap: 0; margin-top: 7px; }
+  .seg {
+    flex: 1; background: var(--bg-elev-2); border: 1px solid var(--border);
+    color: var(--text-faint); font-family: var(--display);
+    font-size: 11px; font-weight: 700; padding: 6px 4px; cursor: pointer;
+  }
+  .seg:first-child { border-radius: 6px 0 0 6px; }
+  .seg:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+  .seg.on { background: var(--accent-dim); border-color: color-mix(in srgb, var(--accent) 40%, transparent); color: var(--accent); }
+  .seg:hover:not(.on) { color: var(--text); }
+
+  .fpFoot {
+    display: flex; gap: 8px; padding: 12px 16px;
+    border-top: 1px solid var(--border); background: var(--bg-elev-2);
+  }
+  .fpFoot .btn { flex: 1; }
 
   .railBottom {
     display: flex;
@@ -785,6 +1004,27 @@
     margin-top: 5px;
   }
   .notice.ok::before { background: var(--nature); }
+  .notice.warn::before { background: var(--fire); }
+
+  /* Deck stat tiles — the at-a-glance health check for a list. */
+  .deckStats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; margin: 2px 0 2px;
+  }
+  .deckStats:empty { display: none; }
+  .dStat {
+    background: var(--bg-elev-2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 4px; text-align: center;
+  }
+  .dStatN {
+    display: block; font-family: var(--display);
+    font-size: 15px; font-weight: 800; color: var(--text);
+    font-variant-numeric: tabular-nums; line-height: 1.15;
+  }
+  .dStatK {
+    display: block; font-size: 9.5px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: .06em; margin-top: 1px;
+  }
 
   /* Mana curve — real data, not a decorative sparkline. */
   .curve { display: flex; align-items: stretch; gap: 3px; height: 54px; margin: 12px 0 4px; }
@@ -989,7 +1229,12 @@
     /* The chip's fill is its colour and its label is its name — hiding the label
        here would leave five unlabelled swatches. Shrink the type instead. */
     .civChip { flex: 1; justify-content: center; padding: 8px 2px; font-size: 10.5px; }
-    #clearBtn { margin-left: 0; }
+    /* Filters + Sort + Clear share one row rather than each claiming a line. */
+    #clearBtn { margin-left: auto; padding: 9px 10px; }
+    .sortWrap { flex: 1; min-width: 0; }
+    .sortWrap select { width: 100%; }
+    .sortWrap label { display: none; }
+    #filterPanel { width: 100%; }
     main { padding: 14px 12px 0; }
     #grid { gap: 10px; }
     #modal { padding: 18px 16px; }
@@ -1026,29 +1271,107 @@
     </h1>
     <div class="searchWrap">
       <input type="text" id="searchInput" autocomplete="off" spellcheck="false"
-             placeholder="Search name, rules text, flavor text, illustrator…"
+             placeholder="Search cards, or try race:ghost cost&lt;=3 -blocker …"
              aria-label="Search cards">
       <span class="kbd">/</span>
     </div>
   </div>
   <div class="railBottom">
     <div class="civChips" id="civChips" role="group" aria-label="Filter by civilization"></div>
-    <select id="typeFilter" aria-label="Type"><option value="">Any type</option></select>
-    <select id="rarityFilter" aria-label="Rarity"><option value="">Any rarity</option></select>
-    <select id="setFilter" aria-label="Set"><option value="">Any set</option></select>
-    <select id="manaFilter" aria-label="Mana cost"><option value="">Any cost</option></select>
-    <select id="keywordFilter" aria-label="Keyword ability"><option value="">Any ability</option></select>
-    <select id="sortSelect" aria-label="Sort order">
-      <option value="name-asc">Name A–Z</option>
-      <option value="name-desc">Name Z–A</option>
-      <option value="mana-asc">Cost: low → high</option>
-      <option value="mana-desc">Cost: high → low</option>
-      <option value="power-desc">Power: high → low</option>
-      <option value="set-asc">Set order</option>
-    </select>
+    <button class="btn primary" id="filtersBtn" aria-expanded="false" aria-controls="filterPanel">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true">
+        <path d="M2 4h12M4.5 8h7M6.5 12h3"/>
+      </svg>
+      Filters<span class="btnN" id="filtersN" hidden>0</span>
+    </button>
+    <div class="sortWrap">
+      <label for="sortSelect">Sort</label>
+      <select id="sortSelect" aria-label="Sort order">
+        <option value="name-asc">Name A–Z</option>
+        <option value="name-desc">Name Z–A</option>
+        <option value="mana-asc">Cost: low → high</option>
+        <option value="mana-desc">Cost: high → low</option>
+        <option value="power-desc">Power: high → low</option>
+        <option value="power-asc">Power: low → high</option>
+        <option value="set-asc">Set order</option>
+        <option value="rarity-desc">Rarity: high → low</option>
+      </select>
+    </div>
     <button class="btn" id="clearBtn">Clear filters</button>
   </div>
+  <div class="activeChips" id="activeChips" aria-live="polite"></div>
 </header>
+
+<!-- Slide-out filter drawer. Keeps the header to search + civ + sort, per user
+     feedback that the rail was cluttered and sort was indistinguishable from filters. -->
+<div id="filterScrim"></div>
+<aside id="filterPanel" aria-label="Filters" aria-hidden="true">
+  <div class="fpHead">
+    <span class="fpTitle">Filters</span>
+    <span class="fpCount" id="fpCount"></span>
+    <button class="fpClose" id="fpClose" aria-label="Close filters">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M4 4l8 8M12 4l-8 8"/>
+      </svg>
+    </button>
+  </div>
+  <div class="fpBody">
+    <div class="fpGroup">
+      <div class="fpLabel">Card type</div>
+      <div class="msWrap" id="ms-type"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Creature type <span class="fpHint">race / family</span></div>
+      <div class="msWrap" id="ms-race"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Keyword ability</div>
+      <div class="msWrap" id="ms-kw"></div>
+      <div class="segRow" role="group" aria-label="Ability match mode">
+        <button class="seg on" data-kwmode="all">Has all</button>
+        <button class="seg" data-kwmode="any">Has any</button>
+      </div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Civilization match</div>
+      <div class="segRow" role="group" aria-label="Civilization match mode">
+        <button class="seg on" data-civmode="any">Any of</button>
+        <button class="seg" data-civmode="only">Only these</button>
+      </div>
+      <div class="fpHint block">“Only these” hides cards that also use a civilization you didn’t pick — the real test for a deck’s colour identity.</div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Mana cost</div>
+      <div class="msWrap" id="ms-cost"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Power</div>
+      <div class="msWrap" id="ms-power"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Rarity</div>
+      <div class="msWrap" id="ms-rarity"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Set</div>
+      <div class="msWrap" id="ms-set"></div>
+    </div>
+    <div class="fpGroup">
+      <div class="fpLabel">Search operators</div>
+      <div class="fpHint block">
+        Type these straight into the search box:<br>
+        <code>name:bolshack</code> · <code>text:blocker</code> · <code>race:ghost</code><br>
+        <code>cost&gt;=5</code> · <code>power&lt;3000</code> · <code>civ:water</code><br>
+        <code>-blocker</code> excludes · <code>"shield trigger"</code> exact phrase
+      </div>
+    </div>
+  </div>
+  <div class="fpFoot">
+    <button class="btn" id="fpClear">Clear all</button>
+    <button class="btn primary" id="fpApply">Show <span id="fpApplyN">0</span></button>
+  </div>
+</aside>
 
 <main>
   <div id="loading">Loading card data…</div>
@@ -1085,6 +1408,7 @@
     </div>
     <button class="btn" id="deckViewBtn" aria-pressed="false">View deck as cards</button>
     <div class="civBar" id="civBar" aria-hidden="true"></div>
+    <div class="deckStats" id="deckStats"></div>
     <div class="notices" id="deckNotices"></div>
     <div class="curve" id="curve" aria-hidden="true"></div>
     <div class="label" style="text-align:center;margin:0">Mana curve</div>
@@ -1131,6 +1455,11 @@ let deckView = false;      // grid shows only the deck, one tile per copy
 let modalCard = null;
 
 const CIVS = ["Light", "Water", "Darkness", "Fire", "Nature"];
+/* Scarcity order, for sorting. "Very Rare" sits above Super Rare in this era's
+   print runs (it is the DM-01–12 name for the top slot). */
+const RARITY_ORDER = {
+  "Common": 0, "Uncommon": 1, "Rare": 2, "Very Rare": 3, "Super Rare": 4
+};
 const CIV_COLOR = {
   Light: "#f7d64a", Water: "#45a9f5", Darkness: "#bb74dd",
   Fire: "#ff6b52", Nature: "#4fd97f"
@@ -1157,17 +1486,35 @@ const KEYWORDS = [
 const $ = (id) => document.getElementById(id);
 const grid = $("grid"), gridScroll = $("gridScroll"), emptyState = $("emptyState");
 const resultCount = $("resultCount"), searchInput = $("searchInput");
-const typeFilter = $("typeFilter"), rarityFilter = $("rarityFilter");
-const setFilter = $("setFilter"), manaFilter = $("manaFilter");
-const keywordFilter = $("keywordFilter"), sortSelect = $("sortSelect");
+const sortSelect = $("sortSelect");
 const clearBtn = $("clearBtn"), civChips = $("civChips");
 const overlay = $("overlay"), modalBody = $("modalBody");
 const toastEl = $("toast"), srStatus = $("srStatus");
 
-const SELECTS = { type: typeFilter, rarity: rarityFilter, set: setFilter,
-                  mana: manaFilter, kw: keywordFilter };
-
 let activeCivs = new Set();
+
+/* ---------- Multi-select filter state ----------
+   Every categorical filter is a Set of chosen values; empty Set = no constraint.
+   `civMode` decides whether multiple civilizations mean "any of" (default, the
+   useful reading when browsing) or "only these" (what a deck's colour identity
+   actually is). */
+const MS = {
+  type:   { key: "type",   label: "Type",          url: "type",   sel: new Set() },
+  race:   { key: "race",   label: "Creature type", url: "race",   sel: new Set(), search: true },
+  rarity: { key: "rarity", label: "Rarity",        url: "rarity", sel: new Set() },
+  set:    { key: "set",    label: "Set",           url: "set",    sel: new Set() },
+  kw:     { key: "kw",     label: "Ability",       url: "kw",     sel: new Set(), search: true }
+};
+
+/* Numeric ranges. null = unbounded on that end. */
+const RANGE = {
+  cost:  { key: "cost",  label: "Cost",  min: null, max: null, urlMin: "cmin", urlMax: "cmax" },
+  power: { key: "power", label: "Power", min: null, max: null, urlMin: "pmin", urlMax: "pmax" }
+};
+
+/* AND vs OR for the two filters where both readings are legitimate. */
+let civMode = "any";   // "any" | "only"
+let kwMode  = "all";   // "all" | "any"
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -1216,6 +1563,10 @@ function indexCards() {
   ALL_CARDS.forEach(c => {
     c._hay = [c.name, c.rules_text, c.flavor_text, c.illustrator, c.abilities, c.race]
       .filter(Boolean).join(" ").toLowerCase();
+    c._name = (c.name || "").toLowerCase();
+    c._text = [c.rules_text, c.abilities].filter(Boolean).join(" ").toLowerCase();
+    // race is a " / "-delimited combo for dual-race creatures (e.g. "Initiate / Liquid People")
+    c._races = c.race ? c.race.split(/\s*\/\s*/).filter(Boolean) : [];
     c._power = powerNum(c);
     c._sortSet = (c.set || "") + String(c.set_number || "").padStart(5, "0");
     const text = [c.rules_text, c.abilities].filter(Boolean).join(" ");
@@ -1227,20 +1578,113 @@ function indexCards() {
 
 /* ---------- Filtering ---------- */
 
+/* ---------- Search query parser ----------
+   Plain words match the whole haystack. Scryfall-style operators let a serious
+   search be expressed directly, which is the difference between a card list and
+   a research tool:
+     name:bolshack | n:bolshack   -- name only
+     text:blocker  | t:blocker    -- rules text only
+     race:ghost    | r:ghost      -- creature type
+     civ:water     | c:water      -- civilization
+     set:dm-01     | s:dm-01      -- set code
+     cost>=5  power<3000  cost=2   -- numeric comparisons
+     -blocker                      -- negate any term
+     "shield trigger"              -- exact phrase
+   Unparseable input degrades to a plain substring search, never to zero results
+   for a syntax slip. */
+const FIELD_ALIASES = {
+  name: "name", n: "name",
+  text: "text", t: "text", o: "text", rules: "text",
+  race: "race", r: "race", subtype: "race",
+  civ: "civ", c: "civ", color: "civ", civilization: "civ",
+  set: "set", s: "set",
+  type: "type",
+  rarity: "rarity",
+  flavor: "flavor", ft: "flavor",
+  artist: "artist", a: "artist", illus: "artist",
+  cost: "cost", cmc: "cost", mana: "cost",
+  power: "power", pow: "power", p: "power"
+};
+const NUMERIC_FIELDS = new Set(["cost", "power"]);
+
+function parseQuery(raw) {
+  const terms = [];
+  // tokens: optional '-', optional field+operator, then a bare/quoted value
+  const re = /(-)?(?:([a-z]+)\s*(>=|<=|!=|[:=<>])\s*)?("[^"]*"|\S+)/gi;
+  let m;
+  while ((m = re.exec(raw)) !== null) {
+    const neg = !!m[1];
+    let field = m[2] ? FIELD_ALIASES[m[2].toLowerCase()] : null;
+    let op = m[3] || ":";
+    let val = m[4] || "";
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    val = val.trim();
+    if (!val) continue;
+    // An unknown prefix (e.g. "http://x") isn't an operator — treat the whole
+    // token as literal text rather than silently dropping it.
+    if (m[2] && !field) { terms.push({ field: null, op: ":", val: m[0].toLowerCase().replace(/^-/, ""), neg }); continue; }
+    if (field && NUMERIC_FIELDS.has(field)) {
+      const num = parseInt(val.replace(/[^0-9]/g, ""), 10);
+      if (isNaN(num)) continue;
+      terms.push({ field, op, num, neg });
+    } else {
+      terms.push({ field, op, val: val.toLowerCase(), neg });
+    }
+  }
+  return terms;
+}
+
+function termMatches(c, t) {
+  let hit;
+  if (t.field && NUMERIC_FIELDS.has(t.field)) {
+    const v = t.field === "cost" ? (c.mana_cost == null ? null : c.mana_cost) : c._power;
+    if (v == null || v < 0) return t.neg;   // unknown value can't satisfy a numeric test
+    switch (t.op) {
+      case ">":  hit = v >  t.num; break;
+      case "<":  hit = v <  t.num; break;
+      case ">=": hit = v >= t.num; break;
+      case "<=": hit = v <= t.num; break;
+      case "!=": hit = v != t.num; break;
+      default:   hit = v === t.num;
+    }
+  } else {
+    let hay;
+    switch (t.field) {
+      case "name":   hay = c._name; break;
+      case "text":   hay = c._text; break;
+      case "race":   hay = (c.race || "").toLowerCase(); break;
+      case "civ":    hay = civsOf(c).join(" ").toLowerCase(); break;
+      case "set":    hay = (c.set || "").toLowerCase(); break;
+      case "type":   hay = (c.type || "").toLowerCase(); break;
+      case "rarity": hay = (c.rarity || "").toLowerCase(); break;
+      case "flavor": hay = (c.flavor_text || "").toLowerCase(); break;
+      case "artist": hay = (c.illustrator || "").toLowerCase(); break;
+      default:       hay = c._hay;
+    }
+    hit = hay.includes(t.val);
+  }
+  return t.neg ? !hit : hit;
+}
+
 function currentFilters() {
   return {
-    q: searchInput.value.trim().toLowerCase(),
+    q: searchInput.value.trim(),
     civs: [...activeCivs],
-    type: typeFilter.value,
-    rarity: rarityFilter.value,
-    set: setFilter.value,
-    mana: manaFilter.value,
-    kw: keywordFilter.value,
+    civMode,
+    kwMode,
+    type: MS.type.sel,
+    race: MS.race.sel,
+    rarity: MS.rarity.sel,
+    set: MS.set.sel,
+    kw: MS.kw.sel,
+    cost: RANGE.cost,
+    power: RANGE.power,
     sort: sortSelect.value
   };
 }
 
-function computeResults() {
+function computeResults(opts) {
+  opts = opts || {};
   const f = currentFilters();
 
   // "My deck" view: show only the cards in the deck, one tile per copy, in deck
@@ -1258,19 +1702,39 @@ function computeResults() {
     return out;
   }
 
+  const terms = f.q ? parseQuery(f.q) : [];
+
   let out = ALL_CARDS.filter(c => {
     if (f.civs.length) {
       const cv = civsOf(c);
-      if (!f.civs.some(x => cv.includes(x))) return false;
+      // "any of": card touches at least one chosen civ (browse-friendly).
+      // "only":   every civ on the card is chosen (a deck's real colour identity).
+      if (f.civMode === "only") {
+        if (!cv.length || !cv.every(x => f.civs.includes(x))) return false;
+      } else if (!f.civs.some(x => cv.includes(x))) return false;
     }
-    if (f.type && c.type !== f.type) return false;
-    if (f.rarity && c.rarity !== f.rarity) return false;
-    if (f.set && c.set !== f.set) return false;
-    if (f.mana && String(c.mana_cost) !== f.mana) return false;
-    if (f.kw && !c._kw.includes(f.kw)) return false;
-    if (f.q && !c._hay.includes(f.q)) return false;
+    if (f.type.size && !f.type.has(c.type)) return false;
+    if (f.race.size && !c._races.some(r => f.race.has(r))) return false;
+    if (f.rarity.size && !f.rarity.has(c.rarity)) return false;
+    if (f.set.size && !f.set.has(c.set)) return false;
+    if (f.kw.size) {
+      // "all" = cards carrying every chosen ability (find the exact combo);
+      // "any" = cards carrying at least one (cast a wide net).
+      const chosen = [...f.kw];
+      const ok = f.kwMode === "any"
+        ? chosen.some(k => c._kw.includes(k))
+        : chosen.every(k => c._kw.includes(k));
+      if (!ok) return false;
+    }
+    if (f.cost.min != null && (c.mana_cost == null || c.mana_cost < f.cost.min)) return false;
+    if (f.cost.max != null && (c.mana_cost == null || c.mana_cost > f.cost.max)) return false;
+    if (f.power.min != null && (c._power < 0 || c._power < f.power.min)) return false;
+    if (f.power.max != null && (c._power < 0 || c._power > f.power.max)) return false;
+    for (const t of terms) if (!termMatches(c, t)) return false;
     return true;
   });
+
+  if (opts.noSort) return out;   // facet counting doesn't need ordering
 
   const [key, dir] = f.sort.split("-");
   const mul = dir === "asc" ? 1 : -1;
@@ -1279,6 +1743,7 @@ function computeResults() {
     if (key === "name") { av = a.name || ""; bv = b.name || ""; }
     else if (key === "mana") { av = a.mana_cost ?? -1; bv = b.mana_cost ?? -1; }
     else if (key === "power") { av = a._power; bv = b._power; }
+    else if (key === "rarity") { av = RARITY_ORDER[a.rarity] ?? -1; bv = RARITY_ORDER[b.rarity] ?? -1; }
     else { av = a._sortSet; bv = b._sortSet; }
     if (av < bv) return -1 * mul;
     if (av > bv) return 1 * mul;
@@ -1288,9 +1753,21 @@ function computeResults() {
   return out;
 }
 
+/* Count of distinct active constraints — drives the badge on the Filters button. */
+function countActiveFilters() {
+  let n = activeCivs.size;
+  Object.values(MS).forEach(m => n += m.sel.size);
+  Object.values(RANGE).forEach(r => { if (r.min != null || r.max != null) n++; });
+  if (searchInput.value.trim()) n++;
+  return n;
+}
+
 function anyFilterActive() {
   const f = currentFilters();
-  return !!(f.q || f.civs.length || f.type || f.rarity || f.set || f.mana || f.kw);
+  return !!(f.q || f.civs.length || f.type.size || f.race.size || f.rarity.size ||
+            f.set.size || f.kw.size ||
+            f.cost.min != null || f.cost.max != null ||
+            f.power.min != null || f.power.max != null);
 }
 
 /* ---------- Virtualized grid ----------
@@ -1494,8 +1971,15 @@ function render(opts) {
   emptyState.classList.toggle("show", n === 0);
   clearBtn.classList.toggle("show", anyFilterActive());
 
-  // mark selects that carry an active value
-  Object.values(SELECTS).forEach(s => s.classList.toggle("active", !!s.value));
+  // keep every filter surface in step with the state it reflects
+  syncAllMs();
+  renderActiveChips();
+  const activeN = countActiveFilters();
+  const fN = $("filtersN");
+  fN.hidden = activeN === 0;
+  fN.textContent = activeN;
+  $("fpCount").textContent = `${n.toLocaleString()} of ${ALL_CARDS.length.toLocaleString()} cards`;
+  $("fpApplyN").textContent = n.toLocaleString();
 
   VGrid.reset();
   if (!opts.keepScroll) window.scrollTo({ top: 0, behavior: "auto" });
@@ -1515,11 +1999,13 @@ function writeUrl() {
   const p = new URLSearchParams();
   if (f.q) p.set("q", f.q);
   if (f.civs.length) p.set("civ", f.civs.join(","));
-  if (f.type) p.set("type", f.type);
-  if (f.rarity) p.set("rarity", f.rarity);
-  if (f.set) p.set("set", f.set);
-  if (f.mana) p.set("cost", f.mana);
-  if (f.kw) p.set("kw", f.kw);
+  Object.values(MS).forEach(m => { if (m.sel.size) p.set(m.url, [...m.sel].join(",")); });
+  Object.values(RANGE).forEach(r => {
+    if (r.min != null) p.set(r.urlMin, r.min);
+    if (r.max != null) p.set(r.urlMax, r.max);
+  });
+  if (civMode !== "any") p.set("civmode", civMode);
+  if (kwMode !== "all") p.set("kwmode", kwMode);
   if (f.sort !== "name-asc") p.set("sort", f.sort);
   if (modalCard) p.set("card", modalCard.id);
   const deckCode = encodeDeck();
@@ -1534,13 +2020,19 @@ function readUrl() {
   suppressUrl = true;
   searchInput.value = p.get("q") || "";
   activeCivs = new Set((p.get("civ") || "").split(",").filter(x => CIVS.includes(x)));
-  typeFilter.value = p.get("type") || "";
-  rarityFilter.value = p.get("rarity") || "";
-  setFilter.value = p.get("set") || "";
-  manaFilter.value = p.get("cost") || "";
-  keywordFilter.value = p.get("kw") || "";
+  Object.values(MS).forEach(m => {
+    m.sel = new Set((p.get(m.url) || "").split(",").filter(Boolean));
+  });
+  Object.values(RANGE).forEach(r => {
+    const a = p.get(r.urlMin), b = p.get(r.urlMax);
+    r.min = a == null || a === "" || isNaN(Number(a)) ? null : Number(a);
+    r.max = b == null || b === "" || isNaN(Number(b)) ? null : Number(b);
+  });
+  civMode = p.get("civmode") === "only" ? "only" : "any";
+  kwMode  = p.get("kwmode") === "any" ? "any" : "all";
   sortSelect.value = p.get("sort") || "name-asc";
   syncCivChips();
+  syncSegs();
   suppressUrl = false;
   return { card: p.get("card"), deck: p.get("deck") };
 }
@@ -1653,18 +2145,58 @@ function renderDeck() {
     .map(cv => `<span style="flex-grow:${civCount[cv]};background:${CIV_COLOR[cv]}"></span>`).join("")
     || `<span style="flex-grow:1"></span>`;
 
+  /* ---- Tournament-relevant deck stats ----
+     Shield triggers, creature count and average cost are the three numbers that
+     decide whether a DM-01–12 list actually functions: triggers are the only
+     defence against the format's rush decks, creature count gates your ability
+     to attack and block at all, and average cost decides whether you can act
+     before the game is over. */
+  const stat = { creatures: 0, spells: 0, evo: 0, triggers: 0, blockers: 0,
+                 breakers: 0, costSum: 0, costN: 0 };
+  entries.forEach(([c, q]) => {
+    if (c.type === "Spell") stat.spells += q; else stat.creatures += q;
+    if (c.is_evolution) stat.evo += q;
+    if (c._kw.includes("Shield trigger")) stat.triggers += q;
+    if (c._kw.includes("Blocker")) stat.blockers += q;
+    if (c._kw.includes("Double breaker") || c._kw.includes("Triple breaker")) stat.breakers += q;
+    if (c.mana_cost != null) { stat.costSum += c.mana_cost * q; stat.costN += q; }
+  });
+  const avgCost = stat.costN ? (stat.costSum / stat.costN) : 0;
+
+  $("deckStats").innerHTML = total === 0 ? "" : [
+    ["Creatures", stat.creatures],
+    ["Spells", stat.spells],
+    ["Triggers", stat.triggers],
+    ["Blockers", stat.blockers],
+    ["Breakers", stat.breakers],
+    ["Avg cost", avgCost.toFixed(1)]
+  ].map(([k, v]) => `<div class="dStat"><span class="dStatN">${v}</span><span class="dStatK">${k}</span></div>`).join("");
+
   // advisory notices — informational, never blocking
   const notices = [];
   if (total === 0) notices.push(["", "Add cards from the grid to start a deck."]);
   else {
     if (total < 40) notices.push(["", `${40 - total} more to reach the standard 40.`]);
-    else notices.push(["ok", `${total} cards — at or above the standard 40.`]);
+    else if (total === 40) notices.push(["ok", `Exactly 40 — tournament legal size.`]);
+    else notices.push(["ok", `${total} cards — legal in the English format (40 minimum).`]);
     const over = entries.filter(([, q]) => q > 4);
     if (over.length) {
-      notices.push(["", `${over.length} card${over.length > 1 ? "s" : ""} above the usual 4-copy limit.`]);
+      notices.push(["warn", `${over.length} card${over.length > 1 ? "s" : ""} over the 4-copy limit — not tournament legal.`]);
     }
     const civs = Object.keys(civCount);
     if (civs.length > 2) notices.push(["", `${civs.length} civilizations — mana may be inconsistent.`]);
+    // Shield-trigger density: the accepted floor is ~6-8 in a 40-card list, since
+    // triggers are your only interaction while tapped out against a rush start.
+    if (total >= 20) {
+      const per40 = stat.triggers / total * 40;
+      if (per40 < 4) notices.push(["warn", `Only ${stat.triggers} shield trigger${stat.triggers === 1 ? "" : "s"} — thin defence against rush.`]);
+      else if (per40 < 6) notices.push(["", `${stat.triggers} shield triggers — most lists run 6–8 per 40.`]);
+      else notices.push(["ok", `${stat.triggers} shield triggers — solid trigger density.`]);
+      if (stat.creatures / total * 40 < 12) {
+        notices.push(["warn", `Only ${stat.creatures} creatures — you may not be able to attack or block.`]);
+      }
+      if (avgCost > 5) notices.push(["warn", `Average cost ${avgCost.toFixed(1)} — likely too slow for this format.`]);
+    }
   }
   $("deckNotices").innerHTML = notices
     .map(([cls, t]) => `<div class="notice ${cls}">${escapeHtml(t)}</div>`).join("");
@@ -1930,17 +2462,48 @@ document.addEventListener("keydown", (e) => {
 const debouncedRender = debounce(() => render(), 120);
 searchInput.addEventListener("input", debouncedRender);
 
-[typeFilter, rarityFilter, setFilter, manaFilter, keywordFilter, sortSelect]
-  .forEach(el => el.addEventListener("change", () => render()));
+sortSelect.addEventListener("change", () => render());
 
-clearBtn.addEventListener("click", () => {
+function clearAllFilters() {
   searchInput.value = "";
   activeCivs.clear();
   syncCivChips();
-  [typeFilter, rarityFilter, setFilter, manaFilter, keywordFilter].forEach(s => s.value = "");
-  sortSelect.value = "name-asc";
+  Object.values(MS).forEach(m => m.sel.clear());
+  Object.values(RANGE).forEach(r => { r.min = null; r.max = null; });
+  civMode = "any"; kwMode = "all";
+  syncSegs();
+  syncAllMs();
   render();
-});
+}
+clearBtn.addEventListener("click", clearAllFilters);
+$("fpClear").addEventListener("click", clearAllFilters);
+
+/* ---------- Filter drawer ---------- */
+
+function setFiltersOpen(open) {
+  $("filterPanel").classList.toggle("open", open);
+  $("filterPanel").setAttribute("aria-hidden", String(!open));
+  $("filterScrim").classList.toggle("show", open);
+  $("filtersBtn").setAttribute("aria-expanded", String(open));
+  if (open) $("fpClose").focus();
+}
+$("filtersBtn").addEventListener("click", () =>
+  setFiltersOpen(!$("filterPanel").classList.contains("open")));
+$("fpClose").addEventListener("click", () => setFiltersOpen(false));
+$("fpApply").addEventListener("click", () => setFiltersOpen(false));
+$("filterScrim").addEventListener("click", () => setFiltersOpen(false));
+
+// Segmented AND/OR toggles
+function syncSegs() {
+  document.querySelectorAll("[data-civmode]").forEach(b =>
+    b.classList.toggle("on", b.dataset.civmode === civMode));
+  document.querySelectorAll("[data-kwmode]").forEach(b =>
+    b.classList.toggle("on", b.dataset.kwmode === kwMode));
+}
+document.querySelectorAll("[data-civmode]").forEach(b =>
+  b.addEventListener("click", () => { civMode = b.dataset.civmode; syncSegs(); render(); }));
+document.querySelectorAll("[data-kwmode]").forEach(b =>
+  b.addEventListener("click", () => { kwMode = b.dataset.kwmode; syncSegs(); render(); }));
 
 $("closeModalBtn").addEventListener("click", closeModal);
 $("prevBtn").addEventListener("click", () => stepModal(-1));
@@ -2061,15 +2624,285 @@ window.addEventListener("resize", debounce(() => {
 
 /* ---------- Populate ---------- */
 
-function populateSelect(sel, values) {
-  const frag = document.createDocumentFragment();
-  values.forEach(v => {
-    const o = document.createElement("option");
-    o.value = v; o.textContent = v;
-    frag.appendChild(o);
+/* ---------- Multi-select component ----------
+   One builder for every categorical filter. Each renders a button that reports
+   its own selection, and a popover of checkboxes with live per-option counts. */
+
+const CHECK_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="#0b0d14" stroke-width="2.6"
+  stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-6.5"/></svg>`;
+const CHEV_SVG = `<svg class="msChev" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>`;
+
+const MS_UI = {};   // key -> { wrap, btn, label, panel, list, values }
+
+function buildMultiSelect(key, values) {
+  const cfg = MS[key];
+  const wrap = $("ms-" + key);
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <button type="button" class="msBtn" aria-haspopup="true" aria-expanded="false">
+      <span class="msLabel">Any ${cfg.label.toLowerCase()}</span>
+      <span class="msN" hidden>0</span>
+      ${CHEV_SVG}
+    </button>
+    <div class="msPanel" role="group" aria-label="${escapeHtml(cfg.label)}">
+      ${cfg.search ? `<input type="text" class="msSearch" placeholder="Search ${escapeHtml(cfg.label.toLowerCase())}…" aria-label="Search ${escapeHtml(cfg.label)}">` : ""}
+      <div class="msList"></div>
+      <div class="msFoot"><button type="button" data-act="all">Select all</button><button type="button" data-act="none">Clear</button></div>
+    </div>`;
+
+  const btn = wrap.querySelector(".msBtn");
+  const panel = wrap.querySelector(".msPanel");
+  const list = wrap.querySelector(".msList");
+  const searchEl = wrap.querySelector(".msSearch");
+  MS_UI[key] = { wrap, btn, panel, list, values, searchEl, filter: "" };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = !wrap.classList.contains("open");
+    closeAllMs();
+    if (open) {
+      wrap.classList.add("open");
+      btn.setAttribute("aria-expanded", "true");
+      // flip the panel if it would run off the right edge
+      const r = panel.getBoundingClientRect();
+      panel.classList.toggle("alignRight", r.right > window.innerWidth - 8);
+      if (searchEl) searchEl.focus();
+    }
   });
-  sel.appendChild(frag);
+  panel.addEventListener("click", e => e.stopPropagation());
+
+  if (searchEl) {
+    searchEl.addEventListener("input", () => {
+      MS_UI[key].filter = searchEl.value.trim().toLowerCase();
+      renderMsList(key);
+    });
+  }
+
+  list.addEventListener("click", (e) => {
+    const opt = e.target.closest(".msOpt");
+    if (!opt) return;
+    const v = opt.dataset.val;
+    if (cfg.sel.has(v)) cfg.sel.delete(v); else cfg.sel.add(v);
+    render();
+  });
+
+  wrap.querySelector('[data-act="all"]').addEventListener("click", () => {
+    visibleMsValues(key).forEach(v => cfg.sel.add(v));
+    render();
+  });
+  wrap.querySelector('[data-act="none"]').addEventListener("click", () => {
+    cfg.sel.clear();
+    render();
+  });
+
+  renderMsList(key);
+  syncMsBtn(key);
 }
+
+function visibleMsValues(key) {
+  const ui = MS_UI[key];
+  if (!ui) return [];
+  return ui.filter ? ui.values.filter(v => v.toLowerCase().includes(ui.filter)) : ui.values;
+}
+
+/* Counts are computed against every filter EXCEPT this one, so the numbers show
+   what each option would add rather than collapsing to the current result set. */
+function msCounts(key) {
+  const cfg = MS[key];
+  const saved = cfg.sel;
+  cfg.sel = new Set();
+  const base = computeResults({ noSort: true });
+  cfg.sel = saved;
+  const counts = new Map();
+  const bump = v => counts.set(v, (counts.get(v) || 0) + 1);
+  base.forEach(c => {
+    if (key === "race") c._races.forEach(bump);
+    else if (key === "kw") c._kw.forEach(bump);
+    else bump(c[key === "set" ? "set" : key === "rarity" ? "rarity" : "type"]);
+  });
+  return counts;
+}
+
+function renderMsList(key) {
+  const ui = MS_UI[key], cfg = MS[key];
+  if (!ui) return;
+  const counts = ALL_CARDS.length ? msCounts(key) : new Map();
+  const vals = visibleMsValues(key);
+  if (!vals.length) { ui.list.innerHTML = `<div class="msNone">No matches</div>`; return; }
+  ui.list.innerHTML = vals.map(v => {
+    const n = counts.get(v) || 0;
+    const on = cfg.sel.has(v);
+    return `<div class="msOpt ${n ? "" : "zero"}" role="checkbox" tabindex="0"
+                 aria-checked="${on}" data-val="${escapeHtml(v)}">
+      <span class="box">${CHECK_SVG}</span>
+      <span class="msOptName">${escapeHtml(v)}</span>
+      <span class="msOptN">${n}</span>
+    </div>`;
+  }).join("");
+}
+
+function syncMsBtn(key) {
+  const ui = MS_UI[key], cfg = MS[key];
+  if (!ui) return;
+  const n = cfg.sel.size;
+  const labelEl = ui.btn.querySelector(".msLabel");
+  const nEl = ui.btn.querySelector(".msN");
+  if (!n) {
+    labelEl.textContent = `Any ${cfg.label.toLowerCase()}`;
+    nEl.hidden = true;
+  } else {
+    const first = [...cfg.sel][0];
+    labelEl.textContent = n === 1 ? first : `${first} +${n - 1}`;
+    nEl.hidden = n < 2;
+    nEl.textContent = n;
+  }
+  ui.btn.classList.toggle("active", n > 0);
+}
+
+function closeAllMs() {
+  document.querySelectorAll(".msWrap.open").forEach(w => {
+    w.classList.remove("open");
+    const b = w.querySelector(".msBtn");
+    if (b) b.setAttribute("aria-expanded", "false");
+  });
+}
+document.addEventListener("click", closeAllMs);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (document.querySelector(".msWrap.open")) { closeAllMs(); return; }
+    if ($("filterPanel").classList.contains("open")) setFiltersOpen(false);
+  }
+});
+// keyboard toggle for the checkbox rows
+document.addEventListener("keydown", (e) => {
+  if (e.key !== " " && e.key !== "Enter") return;
+  const opt = e.target.closest && e.target.closest(".msOpt");
+  if (!opt) return;
+  e.preventDefault();
+  opt.click();
+});
+
+function syncAllMs() {
+  Object.keys(MS).forEach(k => { renderMsList(k); syncMsBtn(k); });
+  syncRangeUI();
+}
+
+/* ---------- Numeric range popovers (cost / power) ---------- */
+
+function buildRange(key, opts) {
+  const cfg = RANGE[key];
+  const wrap = $("ms-" + key);
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <button type="button" class="msBtn" aria-haspopup="true" aria-expanded="false">
+      <span class="msLabel">Any ${cfg.label.toLowerCase()}</span>
+      ${CHEV_SVG}
+    </button>
+    <div class="msPanel" role="group" aria-label="${escapeHtml(cfg.label)} range">
+      <div class="rangeRow">
+        <input type="number" class="rMin" placeholder="min" aria-label="Minimum ${escapeHtml(cfg.label)}" step="${opts.step}" min="${opts.min}">
+        <span>to</span>
+        <input type="number" class="rMax" placeholder="max" aria-label="Maximum ${escapeHtml(cfg.label)}" step="${opts.step}" min="${opts.min}">
+      </div>
+      <div class="rangeHint">${escapeHtml(opts.hint)}</div>
+      <div class="msFoot">${opts.presets.map(p =>
+        `<button type="button" data-min="${p[1] == null ? "" : p[1]}" data-max="${p[2] == null ? "" : p[2]}">${escapeHtml(p[0])}</button>`
+      ).join("")}<button type="button" data-clear="1">Any</button></div>
+    </div>`;
+
+  const btn = wrap.querySelector(".msBtn");
+  const panel = wrap.querySelector(".msPanel");
+  const minEl = wrap.querySelector(".rMin"), maxEl = wrap.querySelector(".rMax");
+  MS_UI[key] = { wrap, btn, panel, minEl, maxEl };
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = !wrap.classList.contains("open");
+    closeAllMs();
+    if (open) {
+      wrap.classList.add("open");
+      btn.setAttribute("aria-expanded", "true");
+      const r = panel.getBoundingClientRect();
+      panel.classList.toggle("alignRight", r.right > window.innerWidth - 8);
+      minEl.focus();
+    }
+  });
+  panel.addEventListener("click", e => e.stopPropagation());
+
+  const commit = debounce(() => {
+    const a = minEl.value === "" ? null : Number(minEl.value);
+    const b = maxEl.value === "" ? null : Number(maxEl.value);
+    cfg.min = (a == null || isNaN(a)) ? null : a;
+    cfg.max = (b == null || isNaN(b)) ? null : b;
+    render();
+  }, 200);
+  minEl.addEventListener("input", commit);
+  maxEl.addEventListener("input", commit);
+
+  panel.querySelectorAll(".msFoot button").forEach(b => {
+    b.addEventListener("click", () => {
+      if (b.dataset.clear) { cfg.min = null; cfg.max = null; }
+      else {
+        cfg.min = b.dataset.min === "" ? null : Number(b.dataset.min);
+        cfg.max = b.dataset.max === "" ? null : Number(b.dataset.max);
+      }
+      syncRangeUI();
+      render();
+    });
+  });
+}
+
+function syncRangeUI() {
+  Object.keys(RANGE).forEach(key => {
+    const ui = MS_UI[key], cfg = RANGE[key];
+    if (!ui || !ui.minEl) return;
+    ui.minEl.value = cfg.min == null ? "" : cfg.min;
+    ui.maxEl.value = cfg.max == null ? "" : cfg.max;
+    const on = cfg.min != null || cfg.max != null;
+    const lab = ui.btn.querySelector(".msLabel");
+    lab.textContent = !on ? `Any ${cfg.label.toLowerCase()}`
+      : cfg.min != null && cfg.max != null ? `${cfg.label} ${cfg.min}–${cfg.max}`
+      : cfg.min != null ? `${cfg.label} ≥ ${cfg.min}`
+      : `${cfg.label} ≤ ${cfg.max}`;
+    ui.btn.classList.toggle("active", on);
+  });
+}
+
+/* ---------- Active filter chips ---------- */
+
+const X_SVG = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"
+  stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>`;
+
+function renderActiveChips() {
+  const chips = [];
+  activeCivs.forEach(cv => chips.push({ t: "civ", v: cv, label: `<b>Civ</b> ${cv}` }));
+  Object.values(MS).forEach(cfg =>
+    cfg.sel.forEach(v => chips.push({ t: cfg.key, v, label: `<b>${escapeHtml(cfg.label)}</b> ${escapeHtml(v)}` })));
+  Object.values(RANGE).forEach(cfg => {
+    if (cfg.min == null && cfg.max == null) return;
+    const txt = cfg.min != null && cfg.max != null ? `${cfg.min}–${cfg.max}`
+              : cfg.min != null ? `≥ ${cfg.min}` : `≤ ${cfg.max}`;
+    chips.push({ t: "range:" + cfg.key, v: "", label: `<b>${escapeHtml(cfg.label)}</b> ${txt}` });
+  });
+
+  const box = $("activeChips");
+  box.innerHTML = chips.map(c =>
+    `<button class="aChip" data-t="${escapeHtml(c.t)}" data-v="${escapeHtml(c.v)}"
+             aria-label="Remove filter">${c.label}${X_SVG}</button>`).join("");
+}
+
+$("activeChips").addEventListener("click", (e) => {
+  const chip = e.target.closest(".aChip");
+  if (!chip) return;
+  const t = chip.dataset.t, v = chip.dataset.v;
+  if (t === "civ") { activeCivs.delete(v); syncCivChips(); }
+  else if (t.startsWith("range:")) {
+    const r = RANGE[t.slice(6)];
+    if (r) { r.min = null; r.max = null; }
+  } else if (MS[t]) MS[t].sel.delete(v);
+  render();
+});
 
 async function init() {
   buildCivChips();
@@ -2083,15 +2916,28 @@ async function init() {
     FACETS = await facetsRes.json();
     indexCards();
 
-    populateSelect(typeFilter, FACETS.types || []);
-    populateSelect(rarityFilter, FACETS.rarities || []);
-    populateSelect(setFilter, FACETS.sets || []);
-    const costs = [...new Set(ALL_CARDS.map(c => c.mana_cost).filter(v => v != null))]
-      .sort((a, b) => a - b);
-    populateSelect(manaFilter, costs.map(String));
     const kwPresent = KEYWORDS.map(([n]) => n)
       .filter(n => ALL_CARDS.some(c => c._kw.includes(n)));
-    populateSelect(keywordFilter, kwPresent);
+    buildMultiSelect("type",   FACETS.types    || []);
+    buildMultiSelect("race",   FACETS.races    || []);
+    buildMultiSelect("rarity", (FACETS.rarities || []).slice()
+      .sort((a, b) => (RARITY_ORDER[a] ?? 99) - (RARITY_ORDER[b] ?? 99)));
+    buildMultiSelect("set",    FACETS.sets     || []);
+    buildMultiSelect("kw",     kwPresent);
+
+    // Range presets chosen from how this format actually plays: 1-3 is the rush /
+    // early-drop band, 6+ is the finisher band, 5000 is the practical "survives a
+    // trade" line and 6000+ clears most removal in DM-01-12.
+    buildRange("cost", {
+      step: 1, min: 0,
+      hint: "Mana cost. Leave a side blank for an open end.",
+      presets: [["1–3", 1, 3], ["4–5", 4, 5], ["6+", 6, null]]
+    });
+    buildRange("power", {
+      step: 500, min: 0,
+      hint: "Printed power. Power-attacker cards use their base value.",
+      presets: [["≤3000", null, 3000], ["5000+", 5000, null], ["7000+", 7000, null]]
+    });
 
     const fromUrl = readUrl();
     if (fromUrl.deck) decodeDeck(fromUrl.deck);
