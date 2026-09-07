@@ -1,7 +1,11 @@
 # Duel Masters Card Database — Web App
 
 A searchable, filterable browser for the Duel Masters card database (DM-01–DM-12 + Promos,
-1010 cards) built in this project. Plain HTML/CSS/JS — no build step, no npm install required.
+1010 printings / 906 unique cards) built in this project. Plain HTML/CSS/JS — no build step,
+no npm install required. `web/data/cards.json` has one entry per unique card (grouped by
+shobu UUID); a card reprinted across multiple sets (e.g. Death Smoke in DM-01/06/10) shows
+once in the browse grid with a `printings` array — see its "Also printed in" line in the
+card modal — instead of one tile per printing.
 
 ## Running it locally
 

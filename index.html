@@ -2309,6 +2309,16 @@ function highlight(text, q) {
   return safe.replace(re, "<mark>$1</mark>");
 }
 
+function printingsHtml(c) {
+  if (!c.printings || c.printings.length < 2) return "";
+  const others = c.printings.filter(p => !(p.set === c.set && p.set_number === c.set_number));
+  if (!others.length) return "";
+  const items = others
+    .map(p => `${escapeHtml(p.set || "")}${p.set_number ? " #" + escapeHtml(p.set_number) : ""}`)
+    .join(", ");
+  return `<div class="field"><div class="label">Also printed in</div><div class="value">${items}</div></div>`;
+}
+
 function field(label, value, cls) {
   const empty = value === null || value === undefined || value === "";
   const q = searchInput.value.trim();
@@ -2345,6 +2355,7 @@ function openModal(c, opts) {
       <h2 id="modalTitle">${escapeHtml(c.name)}</h2>
       <div class="setline">${escapeHtml(c.set || "")}${c.set_number ? " · #" + escapeHtml(c.set_number) : ""}</div>
       <div class="tagRow">${tags}</div>
+      ${printingsHtml(c)}
       <div class="statRow">
         <div class="stat">
           <div class="label">Mana cost</div>
