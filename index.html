@@ -2627,18 +2627,25 @@ $("shareBtn").addEventListener("click", async () => {
   }
 });
 
-$("exportBtn").addEventListener("click", async () => {
+$("exportBtn").addEventListener("click", () => {
+  if (!DECK.size) { toast("Deck is empty"); return; }
   const byId = new Map(ALL_CARDS.map(c => [c.id, c]));
   const lines = deckOrder.filter(id => DECK.get(id))
     .map(id => `${DECK.get(id)}x ${byId.get(id) ? byId.get(id).name : id}`);
-  const text = `# ${$("deckName").value} (${deckTotal()} cards)\n` +
-               lines.join("\n") + `\n\n# code: ${encodeDeck()}`;
-  try {
-    await navigator.clipboard.writeText(text);
-    toast("Deck list copied");
-  } catch (e) {
-    prompt("Copy your deck list:", text);
-  }
+  const name = ($("deckName").value || "deck").trim();
+  const text = `# ${name} (${deckTotal()} cards)\n` +
+               lines.join("\n") + `\n\n# code: ${encodeDeck()}\n`;
+  const safe = name.replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, "") || "deck";
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${safe}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast("Deck list downloaded");
 });
 
 $("importBtn").addEventListener("click", () => {
