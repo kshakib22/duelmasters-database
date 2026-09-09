@@ -26521,9 +26521,9 @@
         "rules_text":  "Evolution—Put on one of your Armored Dragons.\nCrew breaker—Armored Dragon (This creature breaks one more shield for each of your other Armored Dragons in the battle zone.)",
         "illustrator":  "Ryoya Yuki",
         "flavor_text":  "No need to worry! Victory is only seconds away!",
-        "image_url":  null,
-        "image_local":  "images/949.jpg",
-        "image_source":  "kaggle",
+        "image_url":  "https://scans.shobu.io/ec5bdb88-895a-4ca8-8f83-0cd99d24c765.jpg",
+        "image_local":  null,
+        "image_source":  "shobu",
         "printings":  [
                           {
                               "set":  "Promo",
