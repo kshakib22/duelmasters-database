@@ -6863,14 +6863,14 @@
         "set":  "DM-03",
         "set_number":  "43",
         "set_count":  "55",
-        "civilization":  "",
+        "civilization":  "Fire",
         "civilization2":  null,
-        "race":  "",
-        "type":  "",
-        "is_evolution":  false,
+        "race":  "Armored Dragon",
+        "type":  "Evolution Creature",
+        "is_evolution":  true,
         "rarity":  "Very Rare",
-        "mana_cost":  null,
-        "power":  null,
+        "mana_cost":  7,
+        "power":  "11000",
         "abilities":  "",
         "rules_text":  "",
         "illustrator":  null,
@@ -26493,8 +26493,8 @@
         "illustrator":  "Atsushi Kawasaki",
         "flavor_text":  null,
         "image_url":  null,
-        "image_local":  null,
-        "image_source":  "MISSING",
+        "image_local":  "images/945.jpg",
+        "image_source":  "wiki",
         "printings":  [
                           {
                               "set":  "Promo",
@@ -26551,8 +26551,8 @@
         "illustrator":  "Akira Hamada",
         "flavor_text":  "On a full-moon night, the insect swarm forms the shape of the ultimate soldier.",
         "image_url":  null,
-        "image_local":  null,
-        "image_source":  "MISSING",
+        "image_local":  "images/953.jpg",
+        "image_source":  "wiki",
         "printings":  [
                           {
                               "set":  "Promo",
@@ -26754,8 +26754,8 @@
         "illustrator":  "Atsushi Kawasaki",
         "flavor_text":  "Fateful encounter brought them a death battle. Fateful reunion ended their war.",
         "image_url":  null,
-        "image_local":  null,
-        "image_source":  "MISSING",
+        "image_local":  "images/988.jpg",
+        "image_source":  "wiki",
         "printings":  [
                           {
                               "set":  "Promo",
